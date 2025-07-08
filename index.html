@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Utility Consumption Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold text-center mb-6">📊 Utility Consumption Dashboard</h1>
+
+    <!-- Live Display -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-white">
+      <div class="bg-blue-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Steam (kg/h)</h2>
+        <p id="steamVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-green-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Energy (kWh)</h2>
+        <p id="energyVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-purple-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Water (m³)</h2>
+        <p id="waterVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">⏱️ Timestamp</h2>
+        <p id="timeVal" class="text-md font-semibold">--</p>
+      </div>
+    </div>
+
+    <!-- Historical Table -->
+    <h2 class="text-xl font-semibold text-center mb-2">Last 15 Records</h2>
+    <div class="bg-white rounded-xl shadow overflow-auto max-h-[400px]">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-800 text-white sticky top-0">
+          <tr>
+            <th class="px-4 py-2 text-left">Steam (kg/h)</th>
+            <th class="px-4 py-2 text-left">Energy (kWh)</th>
+            <th class="px-4 py-2 text-left">Water (m³)</th>
+            <th class="px-4 py-2 text-left">Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="dataTable" class="bg-gray-50">
+          <!-- JS Fills Here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const baseSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxWRf62qAPZoORbScqvEY3-JpBXZtpMoVSETFHZAJHUYDNXik5x9EfIbObrKwyQZ5bSQXbD2pMN7bb/pub?gid=351020829&single=true&output=csv";
+
+    async function fetchAndUpdate() {
+      try {
+        const csvUrl = `${baseSheetUrl}&t=${new Date().getTime()}`;  // Prevent caching
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+        const rows = text.trim().split("\n").map(row => row.split(","));
+        const data = rows.slice(1); // Skip header
+
+        if (data.length === 0) return;
+
+        const latest = data[data.length - 1];
+        document.getElementById("steamVal").textContent = latest[0];
+        document.getElementById("energyVal").textContent = latest[1];
+        document.getElementById("waterVal").textContent = latest[2];
+        document.getElementById("timeVal").textContent = latest[3];
+
+        const last15 = data.slice(-15).reverse();
+        document.getElementById("dataTable").innerHTML = last15.map(row => `
+          <tr class="border-b hover:bg-gray-100">
+            <td class="px-4 py-2">${row[0]}</td>
+            <td class="px-4 py-2">${row[1]}</td>
+            <td class="px-4 py-2">${row[2]}</td>
+            <td class="px-4 py-2">${row[3]}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error("❌ Error fetching data:", err);
+      }
+    }
+
+    fetchAndUpdate();
+    setInterval(fetchAndUpdate, 5000);  // Update every 5 seconds
+  </script>
+</body>
+</html>
