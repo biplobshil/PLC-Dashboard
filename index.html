@@ -2,201 +2,370 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Google Sheet Form + Live Data Table</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f4f6f8;
-    }
-    h2 {
-      color: #2c3e50;
-    }
-    form, .live-data {
-      background: #fff;
-      padding: 20px;
-      margin-bottom: 40px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      max-width: 700px;
-    }
-    label {
-      display: block;
-      margin-bottom: 10px;
-    }
-    input, textarea {
-      padding: 8px;
-      width: 100%;
-      max-width: 600px;
-      margin-top: 4px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 12px;
-      padding: 10px 20px;
-      background-color: #2980b9;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #1c5980;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 700px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #2980b9;
-      color: white;
-      position: sticky;
-      top: 0;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    #lastUpdated {
-      font-size: 12px;
-      color: #888;
-      margin-top: 8px;
-    }
-    #formStatus {
-      margin-top: 10px;
-      font-weight: bold;
-      color: green;
-    }
-    /* Hidden iframe */
-    #hidden_iframe {
-      display: none;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Utility Consumption Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- XLSX for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF and jsPDF AutoTable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div class="max-w-6xl mx-auto p-6">
 
-  <h2>📥 Submit to Google Sheet</h2>
-  <!-- Hidden iframe to prevent page reload -->
-  <iframe name="hidden_iframe" id="hidden_iframe"></iframe>
+    <h1 class="text-3xl font-bold text-center mb-6">📊 Utility Consumption Dashboard</h1>
 
-  <form id="submitForm" action="https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec" method="POST" target="hidden_iframe">
-    <label>
-      Name:
-      <input type="text" name="Name" required>
-    </label>
-    <label>
-      Email:
-      <input type="email" name="Email" required>
-    </label>
-    <label>
-      Message:
-      <textarea name="Message" rows="4" required></textarea>
-    </label>
-    <button type="submit">Submit</button>
-  </form>
-  <p id="formStatus"></p>
+    <!-- Threshold Controls -->
+    <div class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+      <div>
+        <label for="steamThreshold" class="block font-semibold mb-1">Steam Threshold</label>
+        <input id="steamThreshold" type="number" value="50" class="w-full p-2 border rounded" />
+      </div>
+      <div>
+        <label for="energyThreshold" class="block font-semibold mb-1">Energy Threshold</label>
+        <input id="energyThreshold" type="number" value="50" class="w-full p-2 border rounded" />
+      </div>
+      <div>
+        <label for="waterThreshold" class="block font-semibold mb-1">Water Threshold</label>
+        <input id="waterThreshold" type="number" value="50" class="w-full p-2 border rounded" />
+      </div>
+    </div>
 
-  <div class="live-data">
-    <h2>📡 Live Data Table (Last Records on Top)</h2>
-    <table id="dataTable" aria-label="Live data table">
-      <thead></thead>
-      <tbody></tbody>
-    </table>
-    <div id="lastUpdated"></div>
+    <!-- Live Display -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-white max-w-4xl mx-auto">
+      <div class="bg-blue-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Steam (kg/h)</h2>
+        <p id="steamVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-green-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Energy (kWh)</h2>
+        <p id="energyVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-purple-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Water (m³)</h2>
+        <p id="waterVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">⏱️ Timestamp</h2>
+        <p id="timeVal" class="text-md font-semibold">--</p>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <h2 class="text-xl font-semibold text-center mb-4 max-w-4xl mx-auto">📈 Last 15 Records Chart</h2>
+
+    <div class="max-w-4xl mx-auto mb-6">
+      <canvas id="utilityChart"  class="bg-white rounded-xl shadow p-4 max-h-96 w-full"></canvas>
+    </div>
+
+    <!-- Export Buttons -->
+    <div class="flex justify-center gap-4 mb-6 max-w-4xl mx-auto">
+      <button id="exportCsvBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+        Export Last 30 as CSV
+      </button>
+      <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded">
+        Export Last 30 as Excel
+      </button>
+      <button id="exportPdfBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded">
+        Export Last 30 as PDF
+      </button>
+    </div>
+
+    <!-- Historical Table -->
+    <h2 class="text-xl font-semibold text-center mb-2 max-w-4xl mx-auto">Last 15 Records</h2>
+    <div class="bg-white rounded-xl shadow overflow-auto max-h-[400px] max-w-4xl mx-auto">
+      <table class="min-w-full text-sm border-collapse border border-gray-200">
+        <thead class="bg-gray-800 text-white sticky top-0">
+          <tr>
+            <th class="px-4 py-2 text-left border border-gray-700">Steam (kg/h)</th>
+            <th class="px-4 py-2 text-left border border-gray-700">Energy (kWh)</th>
+            <th class="px-4 py-2 text-left border border-gray-700">Water (m³)</th>
+            <th class="px-4 py-2 text-left border border-gray-700">Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="dataTable" class="bg-gray-50">
+          <!-- JS Fills Here -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <script>
-    // Show success message after form submission via iframe
-    const formStatus = document.getElementById('formStatus');
-    const form = document.getElementById('submitForm');
-    const iframe = document.getElementById('hidden_iframe');
+<script>
+  const baseSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNuaSv2pBb-Fjgzh4L3F_VXuYVs6PPs4rYBTtcHqsQDSc-QR0zrLpR-NKJxz0GCHJ5w15Fzn6GbehY/pub?gid=0&single=true&output=csv";
 
-    form.addEventListener('submit', () => {
-      formStatus.style.color = 'green';
-      formStatus.textContent = 'Submitting...';
-    });
+  let lastDataForExport = [];
+  let lastDataForDisplay = [];
+  let lastTimestamp = null;
+  let chart = null;
 
-    iframe.addEventListener('load', () => {
-      // When iframe loads (after form submits)
-      if (formStatus.textContent === 'Submitting...') {
-        formStatus.textContent = '✅ Submitted successfully!';
-        form.reset();
+  function getThresholds() {
+    return {
+      steam: parseFloat(document.getElementById('steamThreshold').value) || 50,
+      energy: parseFloat(document.getElementById('energyThreshold').value) || 50,
+      water: parseFloat(document.getElementById('waterThreshold').value) || 50,
+    };
+  }
 
-        setTimeout(() => {
-          formStatus.textContent = '';
-        }, 5000);
-      }
-    });
+  function colorCell(value, threshold) {
+    const valNum = parseFloat(value);
+    if (isNaN(valNum)) return '';
+    return valNum > threshold ? 'bg-red-600 text-white font-semibold' : '';
+  }
 
-    // JSONP callback to update live data table
-    function updateData(data) {
-      if (!Array.isArray(data) || data.length === 0) {
-        const tbody = document.querySelector('#dataTable tbody');
-        tbody.innerHTML = '<tr><td colspan="100%">No data found</td></tr>';
-        document.getElementById('lastUpdated').textContent = '';
+  function updateTableColors() {
+    const thresholds = getThresholds();
+    const tbody = document.getElementById("dataTable");
+    for (const tr of tbody.children) {
+      const tds = tr.children;
+      if(tds.length < 4) continue;
+      tds[0].className = `px-4 py-2 border border-gray-300 ${colorCell(tds[0].textContent, thresholds.steam)}`;
+      tds[1].className = `px-4 py-2 border border-gray-300 ${colorCell(tds[1].textContent, thresholds.energy)}`;
+      tds[2].className = `px-4 py-2 border border-gray-300 ${colorCell(tds[2].textContent, thresholds.water)}`;
+    }
+  }
+
+  async function fetchAndUpdate() {
+    try {
+      const csvUrl = `${baseSheetUrl}&t=${new Date().getTime()}`;
+      const res = await fetch(csvUrl);
+      const text = await res.text();
+      const rows = text.trim().split("\n").map(row => row.split(","));
+      const data = rows.slice(1).filter(row => row.length >= 4);
+
+      if (data.length === 0) return;
+
+      const latest = data[data.length - 1];
+
+      if (latest[3] === lastTimestamp) {
+        updateTableColors();
         return;
       }
 
-      // Reverse data so newest on top
-      data = data.slice().reverse();
+      lastTimestamp = latest[3];
 
-      const thead = document.querySelector('#dataTable thead');
-      const tbody = document.querySelector('#dataTable tbody');
+      lastDataForExport = data.slice(-30);
+      lastDataForDisplay = data.slice(-15);
 
-      // Clear old table
-      thead.innerHTML = '';
-      tbody.innerHTML = '';
+      // Update live display
+      document.getElementById("steamVal").textContent = latest[0];
+      document.getElementById("energyVal").textContent = latest[1];
+      document.getElementById("waterVal").textContent = latest[2];
+      document.getElementById("timeVal").textContent = latest[3];
 
-      // Create table headers from keys of first row object
-      const headers = Object.keys(data[0]);
-      const headerRow = document.createElement('tr');
-      headers.forEach(hdr => {
-        const th = document.createElement('th');
-        th.textContent = hdr;
-        headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
+      // Update table
+      const thresholds = getThresholds();
+      const tableHtml = lastDataForDisplay.slice().reverse().map(row => `
+        <tr class="border-b hover:bg-gray-100">
+          <td class="px-4 py-2 border border-gray-300 ${colorCell(row[0], thresholds.steam)}">${row[0]}</td>
+          <td class="px-4 py-2 border border-gray-300 ${colorCell(row[1], thresholds.energy)}">${row[1]}</td>
+          <td class="px-4 py-2 border border-gray-300 ${colorCell(row[2], thresholds.water)}">${row[2]}</td>
+          <td class="px-4 py-2 border border-gray-300">${row[3]}</td>
+        </tr>
+      `).join('');
+      document.getElementById("dataTable").innerHTML = tableHtml;
 
-      // Create rows
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        headers.forEach(hdr => {
-          const td = document.createElement('td');
-          td.textContent = row[hdr] || '';
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
+      // Update Chart
+      updateChart(lastDataForDisplay);
 
-      // Update last updated time
-      const now = new Date().toLocaleTimeString();
-      document.getElementById('lastUpdated').textContent = `Last updated at: ${now}`;
+    } catch (err) {
+      console.error("❌ Error fetching data:", err);
     }
+  }
 
-    // Fetch live data using JSONP
-    function fetchData() {
-      // Remove previous script to avoid duplicates
-      const oldScript = document.getElementById('jsonpScript');
-      if (oldScript) oldScript.remove();
+  function updateChart(data) {
+    const labels = data.map(r => r[3]);
+    const steamData = data.map(r => Number(r[0]));
+    const energyData = data.map(r => Number(r[1]));
+    const waterData = data.map(r => Number(r[2]));
 
-      // Add JSONP callback param for Google Apps Script
-      const script = document.createElement('script');
-      script.id = 'jsonpScript';
-      script.src = `https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?callback=updateData&t=${Date.now()}`;
-      document.body.appendChild(script);
+    const ctx = document.getElementById('utilityChart').getContext('2d');
+
+    if (chart) {
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = steamData;
+      chart.data.datasets[1].data = energyData;
+      chart.data.datasets[2].data = waterData;
+      chart.update();
+    } else {
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Steam (kg/h)',
+              data: steamData,
+              borderColor: 'rgb(59,130,246)', // blue-500
+              backgroundColor: 'rgba(59,130,246,0.3)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Energy (kWh)',
+              data: energyData,
+              borderColor: 'rgb(34,197,94)', // green-500
+              backgroundColor: 'rgba(34,197,94,0.3)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Water (m³)',
+              data: waterData,
+              borderColor: 'rgb(139,92,246)', // purple-600
+              backgroundColor: 'rgba(139,92,246,0.3)',
+              fill: true,
+              tension: 0.3
+            },
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          stacked: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
     }
+  }
 
-    // Auto-refresh every 5 seconds
-    fetchData();
-    setInterval(fetchData, 5000);
-  </script>
+  function exportToCsv() {
+    if (lastDataForExport.length === 0) return alert("No data to export");
+    const header = ["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"];
+    const csvRows = [
+      header.join(","),
+      ...lastDataForExport.map(row => row.join(","))
+    ];
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `utility_consumption_${new Date().toISOString()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportToExcel() {
+    if (lastDataForExport.length === 0) return alert("No data to export");
+    const wsData = [
+      ["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"],
+      ...lastDataForExport
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "UtilityData");
+    XLSX.writeFile(wb, `utility_consumption_${new Date().toISOString()}.xlsx`);
+  }
+
+async function exportToPdf() {
+  if (lastDataForExport.length === 0) return alert("No data to export");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'pt', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // Title
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.text("Utility Consumption Report", pageWidth / 2, 40, { align: "center" });
+
+  // Date subtitle
+  const todayStr = new Date().toLocaleDateString();
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Date: ${todayStr}`, pageWidth / 2, 60, { align: "center" });
+
+  // Prepare columns and rows
+  const columns = ["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"];
+
+  // Calculate totals
+  let totalSteam = 0, totalEnergy = 0, totalWater = 0;
+  const rows = lastDataForExport.map(row => {
+    totalSteam += parseFloat(row[0]) || 0;
+    totalEnergy += parseFloat(row[1]) || 0;
+    totalWater += parseFloat(row[2]) || 0;
+    return row;
+  });
+
+  // Draw table WITHOUT footer
+  doc.autoTable({
+    startY: 80,
+    head: [columns],
+    body: rows,
+    styles: { fontSize: 10 },
+    headStyles: { fillColor: [41, 128, 185] },
+    didDrawPage: (data) => {
+      // Footer text with page number
+      const str = `Page ${doc.internal.getCurrentPageInfo().pageNumber} of ${doc.internal.getNumberOfPages()}`;
+      doc.setFontSize(9);
+      doc.text(str, pageWidth - 40, pageHeight - 10);
+    }
+  });
+
+  // Add totals row manually at the bottom of the last page
+  const finalY = doc.lastAutoTable.finalY || 80;
+
+  // Style for totals row
+  doc.setFillColor(41, 128, 185);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+
+  // Calculate column widths (approximately from autoTable)
+  const margin = 40;
+  const colWidths = [
+    (pageWidth - margin * 2) * 0.25,
+    (pageWidth - margin * 2) * 0.25,
+    (pageWidth - margin * 2) * 0.25,
+    (pageWidth - margin * 2) * 0.25,
+  ];
+
+  let x = margin;
+  const y = finalY + 80;
+
+  // Draw rectangle background for totals row
+  doc.rect(x, y - 12, colWidths.reduce((a,b) => a + b), 18, 'F');
+
+  // Draw totals text
+  doc.text(totalSteam.toFixed(2), x + 5, y);
+  x += colWidths[0];
+  doc.text(totalEnergy.toFixed(2), x + 5, y);
+  x += colWidths[1];
+  doc.text(totalWater.toFixed(2), x + 5, y);
+  x += colWidths[2];
+  doc.text("Total", x + 5, y);
+
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+
+  // Save PDF
+  doc.save(`utility_consumption_report_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+
+  document.getElementById("exportCsvBtn").addEventListener("click", exportToCsv);
+  document.getElementById("exportExcelBtn").addEventListener("click", exportToExcel);
+  document.getElementById("exportPdfBtn").addEventListener("click", exportToPdf);
+
+  // Fetch on load and every 1 second (to keep up with PLC)
+  fetchAndUpdate();
+  setInterval(fetchAndUpdate, 1000);
+
+  // Update colors immediately when thresholds change (without refetching)
+  document.getElementById('steamThreshold').addEventListener('input', updateTableColors);
+  document.getElementById('energyThreshold').addEventListener('input', updateTableColors);
+  document.getElementById('waterThreshold').addEventListener('input', updateTableColors);
+</script>
 
 </body>
 </html>
