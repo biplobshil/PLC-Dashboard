@@ -2,16 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Utility Consumption Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- XLSX for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
-  <div class="max-w-5xl mx-auto p-6">
+  <div class="max-w-6xl mx-auto p-6">
+
     <h1 class="text-3xl font-bold text-center mb-6">📊 Utility Consumption Dashboard</h1>
 
+    <!-- Threshold Controls -->
+    <div class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+      <div>
+        <label for="steamThreshold" class="block font-semibold mb-1">Steam Threshold</label>
+        <input id="steamThreshold" type="number" value="50" class="w-full p-2 border rounded" />
+      </div>
+      <div>
+        <label for="energyThreshold" class="block font-semibold mb-1">Energy Threshold</label>
+        <input id="energyThreshold" type="number" value="50" class="w-full p-2 border rounded" />
+      </div>
+      <div>
+        <label for="waterThreshold" class="block font-semibold mb-1">Water Threshold</label>
+        <input id="waterThreshold" type="number" value="50" class="w-full p-2 border rounded" />
+      </div>
+    </div>
+
     <!-- Live Display -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-white">
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-white max-w-4xl mx-auto">
       <div class="bg-blue-600 p-4 rounded-xl text-center shadow">
         <h2 class="text-xl">Steam (kg/h)</h2>
         <p id="steamVal" class="text-3xl font-bold">--</p>
@@ -30,16 +49,26 @@
       </div>
     </div>
 
+    <!-- Export Buttons -->
+    <div class="flex justify-center gap-4 mb-6 max-w-4xl mx-auto">
+      <button id="exportCsvBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+        Export Last 30 as CSV
+      </button>
+      <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded">
+        Export Last 30 as Excel
+      </button>
+    </div>
+
     <!-- Historical Table -->
-    <h2 class="text-xl font-semibold text-center mb-2">Last 15 Records</h2>
-    <div class="bg-white rounded-xl shadow overflow-auto max-h-[400px]">
-      <table class="min-w-full text-sm">
+    <h2 class="text-xl font-semibold text-center mb-2 max-w-4xl mx-auto">Last 15 Records</h2>
+    <div class="bg-white rounded-xl shadow overflow-auto max-h-[400px] max-w-4xl mx-auto">
+      <table class="min-w-full text-sm border-collapse border border-gray-200">
         <thead class="bg-gray-800 text-white sticky top-0">
           <tr>
-            <th class="px-4 py-2 text-left">Steam (kg/h)</th>
-            <th class="px-4 py-2 text-left">Energy (kWh)</th>
-            <th class="px-4 py-2 text-left">Water (m³)</th>
-            <th class="px-4 py-2 text-left">Timestamp</th>
+            <th class="px-4 py-2 text-left border border-gray-700">Steam (kg/h)</th>
+            <th class="px-4 py-2 text-left border border-gray-700">Energy (kWh)</th>
+            <th class="px-4 py-2 text-left border border-gray-700">Water (m³)</th>
+            <th class="px-4 py-2 text-left border border-gray-700">Timestamp</th>
           </tr>
         </thead>
         <tbody id="dataTable" class="bg-gray-50">
@@ -49,41 +78,104 @@
     </div>
   </div>
 
-  <script>
-    const baseSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxWRf62qAPZoORbScqvEY3-JpBXZtpMoVSETFHZAJHUYDNXik5x9EfIbObrKwyQZ5bSQXbD2pMN7bb/pub?gid=351020829&single=true&output=csv";
+<script>
+  const baseSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNuaSv2pBb-Fjgzh4L3F_VXuYVs6PPs4rYBTtcHqsQDSc-QR0zrLpR-NKJxz0GCHJ5w15Fzn6GbehY/pub?gid=0&single=true&output=csv";
 
-    async function fetchAndUpdate() {
-      try {
-        const csvUrl = `${baseSheetUrl}&t=${new Date().getTime()}`;  // Prevent caching
-        const res = await fetch(csvUrl);
-        const text = await res.text();
-        const rows = text.trim().split("\n").map(row => row.split(","));
-        const data = rows.slice(1); // Skip header
+  let lastDataForExport = [];
+  let lastDataForDisplay = [];
 
-        if (data.length === 0) return;
+  function getThresholds() {
+    return {
+      steam: parseFloat(document.getElementById('steamThreshold').value) || 50,
+      energy: parseFloat(document.getElementById('energyThreshold').value) || 50,
+      water: parseFloat(document.getElementById('waterThreshold').value) || 50,
+    };
+  }
 
-        const latest = data[data.length - 1];
-        document.getElementById("steamVal").textContent = latest[0];
-        document.getElementById("energyVal").textContent = latest[1];
-        document.getElementById("waterVal").textContent = latest[2];
-        document.getElementById("timeVal").textContent = latest[3];
+  function colorCell(value, threshold) {
+    const valNum = parseFloat(value);
+    if (isNaN(valNum)) return '';
+    return valNum > threshold ? 'bg-red-400 text-white font-semibold' : '';
+  }
 
-        const last15 = data.slice(-15).reverse();
-        document.getElementById("dataTable").innerHTML = last15.map(row => `
-          <tr class="border-b hover:bg-gray-100">
-            <td class="px-4 py-2">${row[0]}</td>
-            <td class="px-4 py-2">${row[1]}</td>
-            <td class="px-4 py-2">${row[2]}</td>
-            <td class="px-4 py-2">${row[3]}</td>
-          </tr>
-        `).join('');
-      } catch (err) {
-        console.error("❌ Error fetching data:", err);
-      }
+  async function fetchAndUpdate() {
+    try {
+      const csvUrl = `${baseSheetUrl}&t=${new Date().getTime()}`;
+      const res = await fetch(csvUrl);
+      const text = await res.text();
+      const rows = text.trim().split("\n").map(row => row.split(","));
+      const data = rows.slice(1).filter(row => row.length >= 4);
+
+      if (data.length === 0) return;
+
+      lastDataForExport = data.slice(-30);
+      lastDataForDisplay = data.slice(-15);
+
+      // Update live display with latest
+      const latest = data[data.length - 1];
+      document.getElementById("steamVal").textContent = latest[0];
+      document.getElementById("energyVal").textContent = latest[1];
+      document.getElementById("waterVal").textContent = latest[2];
+      document.getElementById("timeVal").textContent = latest[3];
+
+      // Update table with last 15 records and color cells
+      const thresholds = getThresholds();
+      const tableHtml = lastDataForDisplay.slice().reverse().map(row => `
+        <tr class="border-b hover:bg-gray-100">
+          <td class="px-4 py-2 border border-gray-300 ${colorCell(row[0], thresholds.steam)}">${row[0]}</td>
+          <td class="px-4 py-2 border border-gray-300 ${colorCell(row[1], thresholds.energy)}">${row[1]}</td>
+          <td class="px-4 py-2 border border-gray-300 ${colorCell(row[2], thresholds.water)}">${row[2]}</td>
+          <td class="px-4 py-2 border border-gray-300">${row[3]}</td>
+        </tr>
+      `).join('');
+      document.getElementById("dataTable").innerHTML = tableHtml;
+
+    } catch (err) {
+      console.error("❌ Error fetching data:", err);
     }
+  }
 
-    fetchAndUpdate();
-    setInterval(fetchAndUpdate, 5000);  // Update every 5 seconds
-  </script>
+  function exportToCsv() {
+    if (lastDataForExport.length === 0) return alert("No data to export");
+    const header = ["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"];
+    const csvRows = [
+      header.join(","),
+      ...lastDataForExport.map(row => row.join(","))
+    ];
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `utility_consumption_${new Date().toISOString()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportToExcel() {
+    if (lastDataForExport.length === 0) return alert("No data to export");
+    const wsData = [
+      ["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"],
+      ...lastDataForExport
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "UtilityData");
+    XLSX.writeFile(wb, `utility_consumption_${new Date().toISOString()}.xlsx`);
+  }
+
+  document.getElementById("exportCsvBtn").addEventListener("click", exportToCsv);
+  document.getElementById("exportExcelBtn").addEventListener("click", exportToExcel);
+
+  // Fetch on load and every 5 seconds
+  fetchAndUpdate();
+  setInterval(fetchAndUpdate, 5000);
+
+  // Optional: Update table colors immediately when thresholds change (listen to input changes)
+  document.getElementById('steamThreshold').addEventListener('input', fetchAndUpdate);
+  document.getElementById('energyThreshold').addEventListener('input', fetchAndUpdate);
+  document.getElementById('waterThreshold').addEventListener('input', fetchAndUpdate);
+</script>
+
 </body>
 </html>
