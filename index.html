@@ -1,15 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Submit to Google Sheet</title>
+  <meta charset="UTF-8" />
+  <title>Google Sheet Form + Live Data Table</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f6f8;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    form, .live-data {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 700px;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input, textarea {
+      padding: 8px;
+      width: 100%;
+      max-width: 600px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 20px;
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1c5980;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 700px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #2980b9;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    #lastUpdated {
+      font-size: 12px;
+      color: #888;
+      margin-top: 8px;
+    }
+    #formStatus {
+      margin-top: 10px;
+      font-weight: bold;
+      color: green;
+    }
+    /* Hidden iframe */
+    #hidden_iframe {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <h2>Contact Form</h2>
-  <form action="https://script.google.com/macros/s/AKfycbzC1iTwb4EZ97JfjMVYpP0RmV17-RSWCrXL5xBD2KLSOBTOFy8kr7Cwjn4OKyh0yn2Ilg/exec" method="POST" target="_blank">
-    <input type="text" name="name" placeholder="Name" required><br><br>
-    <input type="email" name="email" placeholder="Email" required><br><br>
-    <textarea name="message" placeholder="Message" required></textarea><br><br>
+
+  <h2>📥 Submit to Google Sheet</h2>
+  <!-- Hidden iframe to prevent page reload -->
+  <iframe name="hidden_iframe" id="hidden_iframe"></iframe>
+
+  <form id="submitForm" action="https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec" method="POST" target="hidden_iframe">
+    <label>
+      Name:
+      <input type="text" name="Name" required>
+    </label>
+    <label>
+      Email:
+      <input type="email" name="Email" required>
+    </label>
+    <label>
+      Message:
+      <textarea name="Message" rows="4" required></textarea>
+    </label>
     <button type="submit">Submit</button>
   </form>
+  <p id="formStatus"></p>
+
+  <div class="live-data">
+    <h2>📡 Live Data Table (Last Records on Top)</h2>
+    <table id="dataTable" aria-label="Live data table">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+    <div id="lastUpdated"></div>
+  </div>
+
+  <script>
+    // Show success message after form submission via iframe
+    const formStatus = document.getElementById('formStatus');
+    const form = document.getElementById('submitForm');
+    const iframe = document.getElementById('hidden_iframe');
+
+    form.addEventListener('submit', () => {
+      formStatus.style.color = 'green';
+      formStatus.textContent = 'Submitting...';
+    });
+
+    iframe.addEventListener('load', () => {
+      // When iframe loads (after form submits)
+      if (formStatus.textContent === 'Submitting...') {
+        formStatus.textContent = '✅ Submitted successfully!';
+        form.reset();
+
+        setTimeout(() => {
+          formStatus.textContent = '';
+        }, 5000);
+      }
+    });
+
+    // JSONP callback to update live data table
+    function updateData(data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = '<tr><td colspan="100%">No data found</td></tr>';
+        document.getElementById('lastUpdated').textContent = '';
+        return;
+      }
+
+      // Reverse data so newest on top
+      data = data.slice().reverse();
+
+      const thead = document.querySelector('#dataTable thead');
+      const tbody = document.querySelector('#dataTable tbody');
+
+      // Clear old table
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      // Create table headers from keys of first row object
+      const headers = Object.keys(data[0]);
+      const headerRow = document.createElement('tr');
+      headers.forEach(hdr => {
+        const th = document.createElement('th');
+        th.textContent = hdr;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      // Create rows
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach(hdr => {
+          const td = document.createElement('td');
+          td.textContent = row[hdr] || '';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      // Update last updated time
+      const now = new Date().toLocaleTimeString();
+      document.getElementById('lastUpdated').textContent = `Last updated at: ${now}`;
+    }
+
+    // Fetch live data using JSONP
+    function fetchData() {
+      // Remove previous script to avoid duplicates
+      const oldScript = document.getElementById('jsonpScript');
+      if (oldScript) oldScript.remove();
+
+      // Add JSONP callback param for Google Apps Script
+      const script = document.createElement('script');
+      script.id = 'jsonpScript';
+      script.src = `https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?callback=updateData&t=${Date.now()}`;
+      document.body.appendChild(script);
+    }
+
+    // Auto-refresh every 5 seconds
+    fetchData();
+    setInterval(fetchData, 5000);
+  </script>
+
 </body>
 </html>
