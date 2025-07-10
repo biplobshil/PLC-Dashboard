@@ -83,6 +83,7 @@
 
   let lastDataForExport = [];
   let lastDataForDisplay = [];
+  let lastTimestamp = null;
 
   function getThresholds() {
     return {
@@ -98,6 +99,19 @@
     return valNum > threshold ? 'bg-red-400 text-white font-semibold' : '';
   }
 
+  function updateTableColors() {
+    // Re-color existing table rows without re-fetching data
+    const thresholds = getThresholds();
+    const tbody = document.getElementById("dataTable");
+    for (const tr of tbody.children) {
+      const tds = tr.children;
+      if(tds.length < 4) continue;
+      tds[0].className = `px-4 py-2 border border-gray-300 ${colorCell(tds[0].textContent, thresholds.steam)}`;
+      tds[1].className = `px-4 py-2 border border-gray-300 ${colorCell(tds[1].textContent, thresholds.energy)}`;
+      tds[2].className = `px-4 py-2 border border-gray-300 ${colorCell(tds[2].textContent, thresholds.water)}`;
+    }
+  }
+
   async function fetchAndUpdate() {
     try {
       const csvUrl = `${baseSheetUrl}&t=${new Date().getTime()}`;
@@ -108,11 +122,21 @@
 
       if (data.length === 0) return;
 
+      const latest = data[data.length - 1];
+
+      // Only update if timestamp is new
+      if (latest[3] === lastTimestamp) {
+        // Just update colors if thresholds changed
+        updateTableColors();
+        return;
+      }
+
+      lastTimestamp = latest[3];
+
       lastDataForExport = data.slice(-30);
       lastDataForDisplay = data.slice(-15);
 
       // Update live display with latest
-      const latest = data[data.length - 1];
       document.getElementById("steamVal").textContent = latest[0];
       document.getElementById("energyVal").textContent = latest[1];
       document.getElementById("waterVal").textContent = latest[2];
@@ -167,14 +191,14 @@
   document.getElementById("exportCsvBtn").addEventListener("click", exportToCsv);
   document.getElementById("exportExcelBtn").addEventListener("click", exportToExcel);
 
-  // Fetch on load and every 5 seconds
+  // Fetch on load and every 1 second (to keep up with PLC)
   fetchAndUpdate();
-  setInterval(fetchAndUpdate, 5000);
+  setInterval(fetchAndUpdate, 1000);
 
-  // Optional: Update table colors immediately when thresholds change (listen to input changes)
-  document.getElementById('steamThreshold').addEventListener('input', fetchAndUpdate);
-  document.getElementById('energyThreshold').addEventListener('input', fetchAndUpdate);
-  document.getElementById('waterThreshold').addEventListener('input', fetchAndUpdate);
+  // Update colors immediately when thresholds change (without refetching)
+  document.getElementById('steamThreshold').addEventListener('input', updateTableColors);
+  document.getElementById('energyThreshold').addEventListener('input', updateTableColors);
+  document.getElementById('waterThreshold').addEventListener('input', updateTableColors);
 </script>
 
 </body>
