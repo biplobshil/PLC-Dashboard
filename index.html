@@ -1,122 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PLC Realtime Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Google Sheet Submit</title>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
-  <div class="max-w-6xl mx-auto p-6">
-    <h1 class="text-4xl font-bold text-center mb-6">📊 PLC Real-Time Dashboard</h1>
-
-    <!-- ✅ LIVE DATA DISPLAY -->
-    <div class="mb-6">
-      <h2 class="text-2xl font-semibold mb-4 text-center">Live Data</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-white">
-        <div class="bg-blue-600 rounded-xl shadow-md p-6 text-center">
-          <h3 class="text-lg">Feed Flow</h3>
-          <p id="feedFlow" class="text-4xl font-bold">--</p>
-        </div>
-        <div class="bg-green-600 rounded-xl shadow-md p-6 text-center">
-          <h3 class="text-lg">Condensate Flow</h3>
-          <p id="condensateFlow" class="text-4xl font-bold">--</p>
-        </div>
-        <div class="bg-purple-600 rounded-xl shadow-md p-6 text-center">
-          <h3 class="text-lg">Product Flow</h3>
-          <p id="productFlow" class="text-4xl font-bold">--</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🕒 CURRENT TIME BOX -->
-    <div class="mb-10">
-      <div class="max-w-md mx-auto bg-yellow-100 border border-yellow-300 rounded-xl shadow p-4 text-center">
-        <h3 class="text-lg font-semibold text-yellow-800">Current Time</h3>
-        <p id="currentTime" class="text-2xl font-mono text-yellow-900 mt-1">--:--:--</p>
-      </div>
-    </div>
-
-    <!-- 📜 HISTORICAL DATA TABLE -->
-    <div>
-      <h2 class="text-2xl font-semibold mb-4 text-center">Last 15 Records</h2>
-      <div class="bg-white shadow-lg rounded-xl overflow-auto max-h-[450px]">
-        <table class="min-w-full table-auto">
-          <thead class="bg-gray-800 text-white">
-            <tr>
-              <th class="px-4 py-2 text-left">Feed Flow</th>
-              <th class="px-4 py-2 text-left">Condensate Flow</th>
-              <th class="px-4 py-2 text-left">Product Flow</th>
-              <th class="px-4 py-2 text-left">Timestamp</th>
-            </tr>
-          </thead>
-          <tbody id="dataTable" class="text-sm bg-gray-50">
-            <!-- Filled by JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+<body>
+  <form id="myForm">
+    <input type="text" name="name" placeholder="Your Name" required><br>
+    <input type="email" name="email" placeholder="Your Email" required><br>
+    <textarea name="message" placeholder="Your Message" required></textarea><br>
+    <button type="submit">Submit</button>
+  </form>
 
   <script>
-    const baseCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSxWRf62qAPZoORbScqvEY3-JpBXZtpMoVSETFHZAJHUYDNXik5x9EfIbObrKwyQZ5bSQXbD2pMN7bb/pub?gid=351020829&single=true&output=csv';
-    let lastTimestamp = null;
-
-    async function fetchData() {
-      const csvUrl = ${baseCsvUrl}&t=${new Date().getTime()};
-
-      try {
-        const response = await fetch(csvUrl);
-        const text = await response.text();
-        const rows = text.trim().split('\n').map(row => row.split(','));
-        const dataRows = rows.slice(1).filter(row => row.length >= 4);
-
-        if (dataRows.length < 1) return;
-
-        const latestRow = dataRows[dataRows.length - 1];
-        const [feed, condensate, product, timestamp] = latestRow;
-
-        // Skip update if same timestamp
-        if (timestamp === lastTimestamp) return;
-
-        // Optional: 30s freshness check (skip if within 30s of now)
-        const now = new Date();
-        const rowTime = new Date(timestamp);
-        const diffSeconds = (now - rowTime) / 1000;
-        if (diffSeconds < 30) return;  // Wait until data is "stable"
-
-        // Update live boxes
-        document.getElementById('feedFlow').textContent = feed;
-        document.getElementById('condensateFlow').textContent = condensate;
-        document.getElementById('productFlow').textContent = product;
-
-        // Update historical table
-        const table = document.getElementById('dataTable');
-        const last15Rows = dataRows.slice(-15).reverse();
-        table.innerHTML = last15Rows.map(row => 
-          <tr class="border-b hover:bg-gray-100">
-            <td class="px-4 py-2">${row[0]}</td>
-            <td class="px-4 py-2">${row[1]}</td>
-            <td class="px-4 py-2">${row[2]}</td>
-            <td class="px-4 py-2">${row[3]}</td>
-          </tr>
-        ).join('');
-
-        lastTimestamp = timestamp;
-      } catch (err) {
-        console.error('❌ Error fetching data:', err);
-      }
-    }
-
-    function updateCurrentTime() {
-      const now = new Date();
-      document.getElementById('currentTime').textContent = now.toLocaleTimeString();
-    }
-
-    fetchData();
-    updateCurrentTime();
-    setInterval(fetchData, 5000);     // poll every 5 seconds
-    setInterval(updateCurrentTime, 1000); // update clock every second
+    document.getElementById("myForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec", {
+        method: "POST",
+        body: formData
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert("Submitted! Row: " + data.row);
+        })
+        .catch(err => {
+          alert("Error: " + err.message);
+        });
+    });
   </script>
 </body>
 </html>
