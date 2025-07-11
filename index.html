@@ -50,6 +50,16 @@
     </label>
   </div>
 
+  <!-- Date Range Filter -->
+  <div class="flex flex-wrap gap-4 items-center justify-center mb-4">
+    <label class="text-sm">
+      From: <input type="datetime-local" id="startDate" class="border px-2 py-1 rounded" />
+    </label>
+    <label class="text-sm">
+      To: <input type="datetime-local" id="endDate" class="border px-2 py-1 rounded" />
+    </label>
+  </div>
+
   <!-- Export Buttons -->
   <div class="flex gap-4 mb-4">
     <button onclick="exportCSV()" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded">Export CSV</button>
@@ -118,6 +128,7 @@
         Steam: row[steamKey],
         Energy: row[energyKey],
         Water: row[waterKey],
+        Timestamp: formatTimestamp(row[timeKey]),
       }));
 
       const newest = rows[rows.length - 1];
@@ -181,10 +192,27 @@
       document.body.appendChild(script);
     }
 
+    // Filter last30Data by date/time range inputs
+    function filterDataByDateRange() {
+      const startInput = document.getElementById("startDate").value;
+      const endInput = document.getElementById("endDate").value;
+      if (!startInput || !endInput) return last30Data;
+
+      const start = new Date(startInput);
+      const end = new Date(endInput);
+      if (isNaN(start) || isNaN(end)) return last30Data;
+
+      return last30Data.filter(row => {
+        const rowDate = new Date(row.Timestamp);
+        return rowDate >= start && rowDate <= end;
+      });
+    }
+
     function exportCSV() {
-      let csv = "Steam,Energy,Water\n";
-      last30Data.forEach(row => {
-        csv += `${row.Steam},${row.Energy},${row.Water}\n`;
+      const filtered = filterDataByDateRange();
+      let csv = "Steam (kg/h),Energy (kWh),Water (m³),Timestamp\n";
+      filtered.forEach(row => {
+        csv += `${row.Steam},${row.Energy},${row.Water},${row.Timestamp}\n`;
       });
       const blob = new Blob([csv], { type: "text/csv" });
       const link = document.createElement("a");
@@ -194,21 +222,38 @@
     }
 
     function exportExcel() {
+      const filtered = filterDataByDateRange();
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(last30Data);
-      XLSX.utils.book_append_sheet(wb, ws, "Utility Data");
+      const wsData = [["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"]];
+      filtered.forEach(row => {
+        wsData.push([row.Steam, row.Energy, row.Water, row.Timestamp]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, "Filtered Data");
       XLSX.writeFile(wb, "utility_data.xlsx");
     }
 
     function exportPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      const headers = [["Steam", "Energy", "Water"]];
-      const rows = last30Data.map(row => [row.Steam, row.Energy, row.Water]);
-      doc.autoTable({ head: headers, body: rows });
+      const filtered = filterDataByDateRange();
+      const headers = [["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"]];
+      const rows = filtered.map(row => [row.Steam, row.Energy, row.Water, row.Timestamp]);
+
+      doc.setFontSize(14);
+      doc.text("Filtered Utility Data", 14, 15);
+      doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: 20,
+        styles: { fontSize: 10, cellPadding: 3 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 }
+      });
+
       doc.save("utility_data.pdf");
     }
 
+    // Initial load and polling
     loadData();
     loadCoilStatus();
     setInterval(loadData, 3000);
