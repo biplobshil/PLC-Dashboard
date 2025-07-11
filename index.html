@@ -46,9 +46,14 @@
     <label class="text-sm">
       Water Threshold: <input type="number" id="waterThreshold" value="500" class="border px-2 py-1 rounded" />
     </label>
-    <button onclick="exportCSV()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded">Export CSV</button>
-    <button onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Export Excel</button>
-    <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Export PDF</button>
+    
+  </div>
+  
+  <!-- Export Buttons -->
+  <div class="flex gap-4 mb-4">
+    <button onclick="exportCSV()" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded">Export CSV</button>
+    <button onclick="exportExcel()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded">Export Excel</button>
+    <button onclick="exportPDF()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded">Export PDF</button>
   </div>
 
   <!-- Cards -->
