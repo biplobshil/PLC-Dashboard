@@ -29,20 +29,22 @@
 
   <!-- Top Controls -->
   <div class="mb-6 flex flex-wrap gap-4 justify-center items-center">
- <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow"> 
-   ⚙️ Motor Control </button> <p class="text-gray-700">Current Coil: <span id="coilStatus" class="font-bold text-lg">--</span></p>
-  </div>
+  <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow">
+    ⚙️ Chiller Control
+  </button>
+  <p class="text-gray-700">Status: <span id="coilStatus" class="font-bold text-lg">--</span></p>
+</div>
 
   <!-- Threshold Controls -->
   <div class="mb-6 flex flex-wrap gap-4 justify-center">
     <label class="text-sm">
-      Steam Threshold: <input type="number" id="steamThreshold" value="3000" class="border px-2 py-1 rounded" />
+      Steam Threshold: <input type="number" id="steamThreshold" value="30" class="border px-2 py-1 rounded" />
     </label>
     <label class="text-sm">
-      Energy Threshold: <input type="number" id="energyThreshold" value="1500" class="border px-2 py-1 rounded" />
+      Energy Threshold: <input type="number" id="energyThreshold" value="15" class="border px-2 py-1 rounded" />
     </label>
     <label class="text-sm">
-      Water Threshold: <input type="number" id="waterThreshold" value="500" class="border px-2 py-1 rounded" />
+      Water Threshold: <input type="number" id="waterThreshold" value="50" class="border px-2 py-1 rounded" />
     </label>
     
   </div>
