@@ -8,6 +8,9 @@
   <!-- Load Poppins font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -25,11 +28,21 @@
   <h1 class="text-4xl font-extrabold mb-8 text-gray-900 select-none">📊 Utility Consumption Dashboard</h1>
 
   <!-- Top Controls -->
-  <div class="mb-6">
-    <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow">
-      🔄 Toggle Coil
-    </button>
-    <p class="mt-2 text-gray-700 text-center">Current Coil: <span id="coilStatus" class="font-bold text-lg">--</span></p>
+  <div class="mb-6 flex flex-col items-center">
+    <div class="flex gap-4 mb-4">
+      <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow">🔄 Toggle Coil</button>
+      <button onclick="exportCSV()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg">📥 CSV</button>
+      <button onclick="exportExcel()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">📊 Excel</button>
+      <button onclick="exportPDF()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">📄 PDF</button>
+    </div>
+    <p class="text-gray-700 text-center">Current Coil: <span id="coilStatus" class="font-bold text-lg">--</span></p>
+  </div>
+
+  <!-- Threshold Controls -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-4xl w-full px-4">
+    <input id="thresholdSteam" type="number" placeholder="Steam Threshold" class="border p-2 rounded w-full" />
+    <input id="thresholdEnergy" type="number" placeholder="Energy Threshold" class="border p-2 rounded w-full" />
+    <input id="thresholdWater" type="number" placeholder="Water Threshold" class="border p-2 rounded w-full" />
   </div>
 
   <!-- Cards -->
@@ -71,6 +84,7 @@
 
   <script>
     let lastTimestamp = null;
+    let latestRowsCache = [];
 
     function formatTimestamp(ts) {
       const dt = new Date(ts);
@@ -86,7 +100,9 @@
       const waterKey = Object.keys(rows[0]).find(k => /water/i.test(k)) || Object.keys(rows[0])[2];
       const timeKey = Object.keys(rows[0]).find(k => /(timestamp|date)/i.test(k)) || Object.keys(rows[0])[3];
 
-      const latestRows = rows.slice(-15).reverse();
+      const latestRows = rows.slice(-30).reverse();
+      latestRowsCache = latestRows;
+
       const newest = rows[rows.length - 1];
       if (newest[timeKey] === lastTimestamp) return;
       lastTimestamp = newest[timeKey];
@@ -96,25 +112,30 @@
       document.getElementById('waterVal').textContent = newest[waterKey] ?? '--';
       document.getElementById('timeVal').textContent = formatTimestamp(newest[timeKey]);
 
+      const steamThreshold = parseFloat(document.getElementById("thresholdSteam").value);
+      const energyThreshold = parseFloat(document.getElementById("thresholdEnergy").value);
+      const waterThreshold = parseFloat(document.getElementById("thresholdWater").value);
+
       const tbody = document.getElementById('dataTable');
-      tbody.innerHTML = latestRows.map(row => `
-        <tr class="hover:bg-gray-200 transition-colors duration-150">
-          <td class="border-b border-gray-300 py-2 px-4">${row[steamKey]}</td>
-          <td class="border-b border-gray-300 py-2 px-4">${row[energyKey]}</td>
-          <td class="border-b border-gray-300 py-2 px-4">${row[waterKey]}</td>
-          <td class="border-b border-gray-300 py-2 px-4">${formatTimestamp(row[timeKey])}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = latestRows.map(row => {
+        const steamVal = row[steamKey];
+        const energyVal = row[energyKey];
+        const waterVal = row[waterKey];
+        return `
+          <tr class="hover:bg-gray-200 transition-colors duration-150">
+            <td class="border-b border-gray-300 py-2 px-4 ${steamThreshold && steamVal > steamThreshold ? 'bg-red-200 font-bold' : ''}">${steamVal}</td>
+            <td class="border-b border-gray-300 py-2 px-4 ${energyThreshold && energyVal > energyThreshold ? 'bg-yellow-200 font-bold' : ''}">${energyVal}</td>
+            <td class="border-b border-gray-300 py-2 px-4 ${waterThreshold && waterVal > waterThreshold ? 'bg-green-200 font-bold' : ''}">${waterVal}</td>
+            <td class="border-b border-gray-300 py-2 px-4">${formatTimestamp(row[timeKey])}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    // function updateCoil(data) {
-    //   document.getElementById("coilStatus").textContent = data?.coil === true || data?.coil === "1" ? "1": "0";
-    // }
-
     function updateCoil(data) {
-          const coilText = data?.coil == 1 ? "ON" : "OFF";
-          document.getElementById("coilStatus").textContent = coilText;
-      }
+      const coilText = data?.coil == 1 ? "ON" : "OFF";
+      document.getElementById("coilStatus").textContent = coilText;
+    }
 
     function toggleCoil() {
       const script = document.createElement('script');
@@ -136,6 +157,32 @@
       script.id = 'jsonpScript';
       script.src = 'https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?callback=updateData&t=' + Date.now();
       document.body.appendChild(script);
+    }
+
+    function exportCSV() {
+      const csv = latestRowsCache.map(row => Object.values(row).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "utility_data.csv";
+      a.click();
+    }
+
+    function exportExcel() {
+      const ws = XLSX.utils.json_to_sheet(latestRowsCache);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+      XLSX.writeFile(wb, "utility_data.xlsx");
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const headers = Object.keys(latestRowsCache[0]);
+      const rows = latestRowsCache.map(row => headers.map(h => row[h]));
+      doc.autoTable({ head: [headers], body: rows });
+      doc.save("utility_data.pdf");
     }
 
     loadData();
