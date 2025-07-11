@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Utility Consumption Dashboard</title>
 
-  <!-- Load Poppins font -->
+  <!-- Load Fonts and Libraries -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -27,13 +27,15 @@
 
   <h1 class="text-4xl font-extrabold mb-8 text-gray-900 select-none">📊 Utility Consumption Dashboard</h1>
 
-  <!-- Top Controls -->
+  <!-- Control Section -->
   <div class="mb-6 flex flex-wrap gap-4 justify-center items-center">
-  <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow">
-    ⚙️ Chiller Control
-  </button>
-  <p class="text-gray-700">Status: <span id="coilStatus" class="font-bold text-lg">--</span></p>
-</div>
+    <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow">
+      ⚙️ Chiller Control
+    </button>
+    <p class="text-gray-700 flex items-center gap-2">
+      Status: <span id="coilStatus" class="font-bold text-lg">--</span>
+    </p>
+  </div>
 
   <!-- Threshold Controls -->
   <div class="mb-6 flex flex-wrap gap-4 justify-center">
@@ -46,9 +48,8 @@
     <label class="text-sm">
       Water Threshold: <input type="number" id="waterThreshold" value="50" class="border px-2 py-1 rounded" />
     </label>
-    
   </div>
-  
+
   <!-- Export Buttons -->
   <div class="flex gap-4 mb-4">
     <button onclick="exportCSV()" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded">Export CSV</button>
@@ -56,7 +57,7 @@
     <button onclick="exportPDF()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded">Export PDF</button>
   </div>
 
-  <!-- Cards -->
+  <!-- Info Cards -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl w-full px-4 mb-4">
     <div class="bg-blue-600 text-white rounded-xl shadow-md p-6 text-center">
       <h2 class="text-lg font-semibold mb-2">Steam (kg/h)</h2>
@@ -76,7 +77,7 @@
     </div>
   </div>
 
-  <!-- Table -->
+  <!-- Data Table -->
   <div class="max-w-6xl w-full bg-white rounded-xl shadow overflow-hidden">
     <div class="overflow-y-auto max-h-96">
       <table class="min-w-full table-fixed border-collapse border border-gray-300">
@@ -93,6 +94,7 @@
     </div>
   </div>
 
+  <!-- JavaScript -->
   <script>
     let lastTimestamp = null;
     let last30Data = [];
@@ -127,9 +129,9 @@
       document.getElementById('waterVal').textContent = newest[waterKey] ?? '--';
       document.getElementById('timeVal').textContent = formatTimestamp(newest[timeKey]);
 
-      const steamThreshold = parseFloat(document.getElementById("steamThreshold")?.value || 30);
-      const energyThreshold = parseFloat(document.getElementById("energyThreshold")?.value || 15);
-      const waterThreshold = parseFloat(document.getElementById("waterThreshold")?.value || 50);
+      const steamThreshold = parseFloat(document.getElementById("steamThreshold").value || 30);
+      const energyThreshold = parseFloat(document.getElementById("energyThreshold").value || 15);
+      const waterThreshold = parseFloat(document.getElementById("waterThreshold").value || 50);
 
       const tbody = document.getElementById('dataTable');
       tbody.innerHTML = latestRows.slice(0, 15).map(row => {
@@ -153,19 +155,19 @@
     }
 
     function updateCoil(data) {
-      const coilText = data?.coil == 1 ? "ON" : "OFF";
+      const coilText = data?.coil == 1 ? "🟢 ON" : "🔴 OFF";
       document.getElementById("coilStatus").textContent = coilText;
     }
 
     function toggleCoil() {
       const script = document.createElement('script');
-      script.src = 'https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?toggleCoil=true&callback=updateCoil&t=' + Date.now();
+      script.src = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?toggleCoil=true&callback=updateCoil&t=' + Date.now();
       document.body.appendChild(script);
     }
 
     function loadCoilStatus() {
       const script = document.createElement('script');
-      script.src = 'https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?coil=true&callback=updateCoil&t=' + Date.now();
+      script.src = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?coil=true&callback=updateCoil&t=' + Date.now();
       document.body.appendChild(script);
     }
 
@@ -175,7 +177,7 @@
 
       const script = document.createElement('script');
       script.id = 'jsonpScript';
-      script.src = 'https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?callback=updateData&t=' + Date.now();
+      script.src = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?callback=updateData&t=' + Date.now();
       document.body.appendChild(script);
     }
 
