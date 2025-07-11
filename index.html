@@ -29,15 +29,8 @@
 
   <!-- Top Controls -->
   <div class="mb-6 flex flex-wrap gap-4 justify-center items-center">
-    <button onclick="toggleCoil()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow">
-  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-       xmlns="http://www.w3.org/2000/svg">
-    <path stroke-linecap="round" stroke-linejoin="round"
-          d="M3 13h2v-2H3v2zm0 0v4a1 1 0 001 1h3v-6H4a1 1 0 00-1 1zm6 5h10a1 1 0 001-1v-8a1 1 0 00-1-1H9v10zm0-12V4a1 1 0 011-1h2a1 1 0 011 1v2H9z"/>
-  </svg>
-  Motor Control
-</button>
-
+ <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow"> 
+   ⚙️ Motor Control </button> <p class="text-gray-700">Current Coil: <span id="coilStatus" class="font-bold text-lg">--</span></p>
   </div>
 
   <!-- Threshold Controls -->
@@ -132,9 +125,9 @@
       document.getElementById('waterVal').textContent = newest[waterKey] ?? '--';
       document.getElementById('timeVal').textContent = formatTimestamp(newest[timeKey]);
 
-      const steamThreshold = parseFloat(document.getElementById("steamThreshold")?.value || 3000);
-      const energyThreshold = parseFloat(document.getElementById("energyThreshold")?.value || 1500);
-      const waterThreshold = parseFloat(document.getElementById("waterThreshold")?.value || 500);
+      const steamThreshold = parseFloat(document.getElementById("steamThreshold")?.value || 30);
+      const energyThreshold = parseFloat(document.getElementById("energyThreshold")?.value || 15);
+      const waterThreshold = parseFloat(document.getElementById("waterThreshold")?.value || 50);
 
       const tbody = document.getElementById('dataTable');
       tbody.innerHTML = latestRows.slice(0, 15).map(row => {
