@@ -2,262 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Utility Consumption Dashboard</title>
-
-  <!-- Load Fonts and Libraries -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Poppins', 'ui-sans-serif', 'system-ui'],
-          },
-        },
-      },
-    };
-  </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold text-center mb-6">📊 Utility Consumption Dashboard</h1>
 
-  <h1 class="text-4xl font-extrabold mb-8 text-gray-900 select-none">📊 Utility Consumption Dashboard</h1>
-
-  <!-- Control Section -->
-  <div class="mb-6 flex flex-wrap gap-4 justify-center items-center">
-    <button onclick="toggleCoil()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow">
-      ⚙️ Chiller Control
-    </button>
-    <p class="text-gray-700 flex items-center gap-2">
-      Status: <span id="coilStatus" class="font-bold text-lg">--</span>
-    </p>
-  </div>
-
-  <!-- Threshold Controls -->
-  <div class="mb-6 flex flex-wrap gap-4 justify-center">
-    <label class="text-sm">
-      Steam Threshold: <input type="number" id="steamThreshold" value="30" class="border px-2 py-1 rounded" />
-    </label>
-    <label class="text-sm">
-      Energy Threshold: <input type="number" id="energyThreshold" value="15" class="border px-2 py-1 rounded" />
-    </label>
-    <label class="text-sm">
-      Water Threshold: <input type="number" id="waterThreshold" value="50" class="border px-2 py-1 rounded" />
-    </label>
-  </div>
-
-  <!-- Date Range Filter -->
-  <div class="flex flex-wrap gap-4 items-center justify-center mb-4">
-    <label class="text-sm">
-      From: <input type="datetime-local" id="startDate" class="border px-2 py-1 rounded" />
-    </label>
-    <label class="text-sm">
-      To: <input type="datetime-local" id="endDate" class="border px-2 py-1 rounded" />
-    </label>
-  </div>
-
-  <!-- Export Buttons -->
-  <div class="flex gap-4 mb-4">
-    <button onclick="exportCSV()" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded">Export CSV</button>
-    <button onclick="exportExcel()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded">Export Excel</button>
-    <button onclick="exportPDF()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded">Export PDF</button>
-  </div>
-
-  <!-- Info Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl w-full px-4 mb-4">
-    <div class="bg-blue-600 text-white rounded-xl shadow-md p-6 text-center">
-      <h2 class="text-lg font-semibold mb-2">Steam (kg/h)</h2>
-      <p id="steamVal" class="text-4xl font-bold tracking-wide">--</p>
+    <!-- Live Display -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-white">
+      <div class="bg-blue-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Steam (kg/h)</h2>
+        <p id="steamVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-green-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Energy (kWh)</h2>
+        <p id="energyVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-purple-600 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">Water (m³)</h2>
+        <p id="waterVal" class="text-3xl font-bold">--</p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-xl text-center shadow">
+        <h2 class="text-xl">⏱️ Timestamp</h2>
+        <p id="timeVal" class="text-md font-semibold">--</p>
+      </div>
     </div>
-    <div class="bg-green-600 text-white rounded-xl shadow-md p-6 text-center">
-      <h2 class="text-lg font-semibold mb-2">Energy (kWh)</h2>
-      <p id="energyVal" class="text-4xl font-bold tracking-wide">--</p>
-    </div>
-    <div class="bg-purple-600 text-white rounded-xl shadow-md p-6 text-center">
-      <h2 class="text-lg font-semibold mb-2">Water (m³)</h2>
-      <p id="waterVal" class="text-4xl font-bold tracking-wide">--</p>
-    </div>
-    <div class="bg-gray-800 text-white rounded-xl shadow-md p-6 text-center">
-      <h2 class="text-lg font-semibold mb-2">⏱️ Timestamp</h2>
-      <p id="timeVal" class="text-xl font-mono tracking-wide">--</p>
-    </div>
-  </div>
 
-  <!-- Data Table -->
-  <div class="max-w-6xl w-full bg-white rounded-xl shadow overflow-hidden">
-    <div class="overflow-y-auto max-h-96">
-      <table class="min-w-full table-fixed border-collapse border border-gray-300">
-        <thead class="bg-gray-800 text-white sticky top-0 z-10">
+    <!-- Historical Table -->
+    <h2 class="text-xl font-semibold text-center mb-2">Last 15 Records</h2>
+    <div class="bg-white rounded-xl shadow overflow-auto max-h-[400px]">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-800 text-white sticky top-0">
           <tr>
-            <th class="py-3 px-6 text-left w-1/4">Steam (kg/h)</th>
-            <th class="py-3 px-6 text-left w-1/4">Energy (kWh)</th>
-            <th class="py-3 px-6 text-left w-1/4">Water (m³)</th>
-            <th class="py-3 px-6 text-left w-1/4">Timestamp</th>
+            <th class="px-4 py-2 text-left">Steam (kg/h)</th>
+            <th class="px-4 py-2 text-left">Energy (kWh)</th>
+            <th class="px-4 py-2 text-left">Water (m³)</th>
+            <th class="px-4 py-2 text-left">Timestamp</th>
           </tr>
         </thead>
-        <tbody id="dataTable" class="bg-gray-50"></tbody>
+        <tbody id="dataTable" class="bg-gray-50">
+          <!-- JS Fills Here -->
+        </tbody>
       </table>
     </div>
   </div>
 
-  <!-- JavaScript -->
   <script>
-    let lastTimestamp = null;
-    let last30Data = [];
+    const baseSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxWRf62qAPZoORbScqvEY3-JpBXZtpMoVSETFHZAJHUYDNXik5x9EfIbObrKwyQZ5bSQXbD2pMN7bb/pub?gid=351020829&single=true&output=csv";
 
-    function formatTimestamp(ts) {
-      const dt = new Date(ts);
-      if (isNaN(dt)) return ts;
-      return `${dt.getMonth()+1}/${dt.getDate()}/${dt.getFullYear()} ${dt.getHours().toString().padStart(2, '0')}:${dt.getMinutes().toString().padStart(2, '0')}:${dt.getSeconds().toString().padStart(2, '0')}`;
-    }
+    async function fetchAndUpdate() {
+      try {
+        const csvUrl = `${baseSheetUrl}&t=${new Date().getTime()}`;  // Prevent caching
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+        const rows = text.trim().split("\n").map(row => row.split(","));
+        const data = rows.slice(1); // Skip header
 
-    function updateData(rows) {
-      if (!Array.isArray(rows) || rows.length === 0) return;
+        if (data.length === 0) return;
 
-      const steamKey = Object.keys(rows[0]).find(k => /steam/i.test(k));
-      const energyKey = Object.keys(rows[0]).find(k => /energy/i.test(k));
-      const waterKey = Object.keys(rows[0]).find(k => /water/i.test(k));
-      const timeKey = Object.keys(rows[0]).find(k => /(timestamp|date)/i.test(k));
+        const latest = data[data.length - 1];
+        document.getElementById("steamVal").textContent = latest[0];
+        document.getElementById("energyVal").textContent = latest[1];
+        document.getElementById("waterVal").textContent = latest[2];
+        document.getElementById("timeVal").textContent = latest[3];
 
-      const latestRows = rows.slice(-30).reverse();
-      last30Data = latestRows.map(row => ({
-        Steam: row[steamKey],
-        Energy: row[energyKey],
-        Water: row[waterKey],
-        Timestamp: formatTimestamp(row[timeKey]),
-      }));
-
-      const newest = rows[rows.length - 1];
-      if (newest[timeKey] === lastTimestamp) return;
-      lastTimestamp = newest[timeKey];
-
-      document.getElementById('steamVal').textContent = newest[steamKey] ?? '--';
-      document.getElementById('energyVal').textContent = newest[energyKey] ?? '--';
-      document.getElementById('waterVal').textContent = newest[waterKey] ?? '--';
-      document.getElementById('timeVal').textContent = formatTimestamp(newest[timeKey]);
-
-      const steamThreshold = parseFloat(document.getElementById("steamThreshold").value || 30);
-      const energyThreshold = parseFloat(document.getElementById("energyThreshold").value || 15);
-      const waterThreshold = parseFloat(document.getElementById("waterThreshold").value || 50);
-
-      const tbody = document.getElementById('dataTable');
-      tbody.innerHTML = latestRows.slice(0, 15).map(row => {
-        const steam = parseFloat(row[steamKey]);
-        const energy = parseFloat(row[energyKey]);
-        const water = parseFloat(row[waterKey]);
-
-        const steamClass = steam > steamThreshold ? "bg-red-100 text-red-600 font-semibold" : "";
-        const energyClass = energy > energyThreshold ? "bg-yellow-100 text-yellow-700 font-semibold" : "";
-        const waterClass = water > waterThreshold ? "bg-green-100 text-green-700 font-semibold" : "";
-
-        return `
-          <tr class="hover:bg-gray-200 transition-colors duration-150">
-            <td class="border-b border-gray-300 py-2 px-4 ${steamClass}">${row[steamKey]}</td>
-            <td class="border-b border-gray-300 py-2 px-4 ${energyClass}">${row[energyKey]}</td>
-            <td class="border-b border-gray-300 py-2 px-4 ${waterClass}">${row[waterKey]}</td>
-            <td class="border-b border-gray-300 py-2 px-4">${formatTimestamp(row[timeKey])}</td>
+        const last15 = data.slice(-15).reverse();
+        document.getElementById("dataTable").innerHTML = last15.map(row => `
+          <tr class="border-b hover:bg-gray-100">
+            <td class="px-4 py-2">${row[0]}</td>
+            <td class="px-4 py-2">${row[1]}</td>
+            <td class="px-4 py-2">${row[2]}</td>
+            <td class="px-4 py-2">${row[3]}</td>
           </tr>
-        `;
-      }).join('');
+        `).join('');
+      } catch (err) {
+        console.error("❌ Error fetching data:", err);
+      }
     }
 
-    function updateCoil(data) {
-      const coilText = data?.coil == 1 ? "🟢 ON" : "🔴 OFF";
-      document.getElementById("coilStatus").textContent = coilText;
-    }
-
-    function toggleCoil() {
-      const script = document.createElement('script');
-      script.src = 'https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?toggleCoil=true&callback=updateCoil&t=' + Date.now();
-      document.body.appendChild(script);
-    }
-
-    function loadCoilStatus() {
-      const script = document.createElement('script');
-      script.src = 'https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?coil=true&callback=updateCoil&t=' + Date.now();
-      document.body.appendChild(script);
-    }
-
-    function loadData() {
-      const oldScript = document.getElementById('jsonpScript');
-      if (oldScript) oldScript.remove();
-
-      const script = document.createElement('script');
-      script.id = 'jsonpScript';
-      script.src = 'https://script.google.com/macros/s/AKfycby0tirmzXpcyEuNVa9itlU9ibt2mMBpmd2P_8zLf_U/exec?callback=updateData&t=' + Date.now();
-      document.body.appendChild(script);
-    }
-
-    // Filter last30Data by date/time range inputs
-    function filterDataByDateRange() {
-      const startInput = document.getElementById("startDate").value;
-      const endInput = document.getElementById("endDate").value;
-      if (!startInput || !endInput) return last30Data;
-
-      const start = new Date(startInput);
-      const end = new Date(endInput);
-      if (isNaN(start) || isNaN(end)) return last30Data;
-
-      return last30Data.filter(row => {
-        const rowDate = new Date(row.Timestamp);
-        return rowDate >= start && rowDate <= end;
-      });
-    }
-
-    function exportCSV() {
-      const filtered = filterDataByDateRange();
-      let csv = "Steam (kg/h),Energy (kWh),Water (m³),Timestamp\n";
-      filtered.forEach(row => {
-        csv += `${row.Steam},${row.Energy},${row.Water},${row.Timestamp}\n`;
-      });
-      const blob = new Blob([csv], { type: "text/csv" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "utility_data.csv";
-      link.click();
-    }
-
-    function exportExcel() {
-      const filtered = filterDataByDateRange();
-      const wb = XLSX.utils.book_new();
-      const wsData = [["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"]];
-      filtered.forEach(row => {
-        wsData.push([row.Steam, row.Energy, row.Water, row.Timestamp]);
-      });
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, "Filtered Data");
-      XLSX.writeFile(wb, "utility_data.xlsx");
-    }
-
-    function exportPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const filtered = filterDataByDateRange();
-      const headers = [["Steam (kg/h)", "Energy (kWh)", "Water (m³)", "Timestamp"]];
-      const rows = filtered.map(row => [row.Steam, row.Energy, row.Water, row.Timestamp]);
-
-      doc.setFontSize(14);
-      doc.text("Filtered Utility Data", 14, 15);
-      doc.autoTable({
-        head: headers,
-        body: rows,
-        startY: 20,
-        styles: { fontSize: 10, cellPadding: 3 },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255 }
-      });
-
-      doc.save("utility_data.pdf");
-    }
-
-    // Initial load and polling
-    loadData();
-    loadCoilStatus();
-    setInterval(loadData, 3000);
-    setInterval(loadCoilStatus, 5000);
+    fetchAndUpdate();
+    setInterval(fetchAndUpdate, 5000);  // Update every 5 seconds
   </script>
 </body>
 </html>
