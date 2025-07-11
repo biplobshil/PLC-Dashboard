@@ -107,9 +107,14 @@
       `).join('');
     }
 
+    // function updateCoil(data) {
+    //   document.getElementById("coilStatus").textContent = data?.coil === true || data?.coil === "1" ? "1": "0";
+    // }
+
     function updateCoil(data) {
-      document.getElementById("coilStatus").textContent = data?.coil === true || data?.coil === "1" ? "1": "0";
-    }
+          const coilText = data?.coil == 1 ? "ON" : "OFF";
+          document.getElementById("coilStatus").textContent = coilText;
+      }
 
     function toggleCoil() {
       const script = document.createElement('script');
