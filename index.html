@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Biplob Automation Lab</title>
   
-  <!-- Poppins font from Google Fonts -->
+  <!-- Poppins font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,11 +16,9 @@
     body {
       font-family: 'Poppins', sans-serif;
     }
-    /* Force Poppins font everywhere, override Tailwind font-sans */
     * {
       font-family: 'Poppins', sans-serif !important;
     }
-    /* Also force Poppins font on buttons and submit inputs */
     button, input[type="submit"] {
       font-family: 'Poppins', sans-serif !important;
     }
@@ -142,7 +140,22 @@
         <h3 class="text-xl font-bold mb-4">Your Cart</h3>
         <ul id="cart-items" class="divide-y divide-gray-200 max-h-72 overflow-y-auto mb-4"></ul>
         <p class="font-semibold text-lg mb-4">Total: $<span id="cart-total">0</span></p>
-        <button id="clear-cart" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full">Clear Cart</button>
+        <button id="clear-cart" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full mb-4">Clear Cart</button>
+        <button id="proceed-payment" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition w-full" disabled>Proceed to Payment</button>
+
+        <!-- Email form modal -->
+        <div id="email-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+          <div class="bg-white rounded-lg max-w-md w-full p-6 relative">
+            <h3 class="text-xl font-bold mb-4">Enter Your Email</h3>
+            <form id="email-form" class="flex flex-col gap-4">
+              <input type="email" id="buyer-email" placeholder="Your email" required class="px-4 py-2 border border-gray-300 rounded" />
+              <div class="flex justify-end gap-4">
+                <button type="button" id="email-cancel" class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100">Cancel</button>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Continue</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </aside>
     </div>
   </section>
@@ -187,12 +200,11 @@
       document.getElementById('mobile-menu').classList.toggle('hidden');
     });
 
-    // Scroll reveal animation with console logs for debugging
+    // Scroll reveal animation
     const revealEls = document.querySelectorAll('.fade-in');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          console.log('Element visible:', entry.target);
           entry.target.classList.add('visible');
         }
       });
@@ -200,11 +212,21 @@
 
     revealEls.forEach(el => observer.observe(el));
 
-    // Cart functionality
-    const cart = [];
+    // Cart Logic
     const cartItemsEl = document.getElementById('cart-items');
     const cartTotalEl = document.getElementById('cart-total');
     const clearCartBtn = document.getElementById('clear-cart');
+    const proceedPaymentBtn = document.getElementById('proceed-payment');
+    const emailModal = document.getElementById('email-modal');
+    const emailForm = document.getElementById('email-form');
+    const emailCancelBtn = document.getElementById('email-cancel');
+    const buyerEmailInput = document.getElementById('buyer-email');
+
+    let cart = [];
+
+    function updateProceedButton() {
+      proceedPaymentBtn.disabled = cart.length === 0;
+    }
 
     function renderCart() {
       cartItemsEl.innerHTML = '';
@@ -230,24 +252,83 @@
           const idx = e.target.getAttribute('data-index');
           cart.splice(idx, 1);
           renderCart();
+          updateProceedButton();
         });
       });
+      updateProceedButton();
     }
 
-    // Add to cart buttons
+    clearCartBtn.addEventListener('click', () => {
+      cart.length = 0; // clear array
+      renderCart();
+      updateProceedButton();
+    });
+
     document.querySelectorAll('.buy-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const name = btn.getAttribute('data-name');
         const price = parseFloat(btn.getAttribute('data-price'));
         cart.push({ name, price });
         renderCart();
+        updateProceedButton();
       });
     });
 
-    clearCartBtn.addEventListener('click', () => {
-      cart.length = 0; // clear array
-      renderCart();
+    // Proceed to payment button click
+    proceedPaymentBtn.addEventListener('click', () => {
+      // Show email modal
+      emailModal.classList.remove('hidden');
+      buyerEmailInput.value = '';
+      buyerEmailInput.focus();
     });
+
+    // Cancel email input
+    emailCancelBtn.addEventListener('click', () => {
+      emailModal.classList.add('hidden');
+    });
+
+    // Handle email form submission
+    emailForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const email = buyerEmailInput.value.trim();
+      if (!email) {
+        alert('Please enter a valid email.');
+        return;
+      }
+      
+      // Hide modal
+      emailModal.classList.add('hidden');
+
+      // Calculate total amount
+      let total = cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
+
+      // Replace with your actual bKash Personal Retail Account payment link here:
+      const bkashPaymentUrl = 'https://bka.sh/your-personal-retail-account-link';
+
+      const productList = cart.map(item => `${item.name} ($${item.price})`).join('\n');
+
+      // Show payment info and confirm redirect
+      const proceed = confirm(
+        `Thank you for your purchase!\n\n` +
+        `Email: ${email}\n` +
+        `Items:\n${productList}\n\n` +
+        `Total: $${total}\n\n` +
+        `You will be redirected to bKash payment page.\n\n` +
+        `Click OK to proceed.`
+      );
+
+      if (proceed) {
+        window.location.href = bkashPaymentUrl;
+      } else {
+        alert('Payment cancelled.');
+      }
+
+      // Clear cart after
+      cart.length = 0;
+      renderCart();
+      updateProceedButton();
+    });
+
   </script>
 </body>
 </html>
