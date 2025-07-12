@@ -4,10 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Biplob Automation Lab</title>
+  
+  <!-- Poppins font from Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html {
       scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
     }
     .fade-in {
       opacity: 0;
@@ -102,7 +109,7 @@
     <div class="max-w-md mx-auto text-center">
       <h3 class="text-xl sm:text-2xl font-bold mb-4">Subscribe to Newsletter</h3>
       <p class="text-sm sm:text-base mb-6">Stay updated with upcoming training and automation insights.</p>
-      <form class="flex flex-col sm:flex-row gap-3 justify-center">
+      <form class="flex flex-col sm:flex-row gap-3 justify-center" onsubmit="event.preventDefault(); alert('Subscribed!');">
         <input type="email" placeholder="Your email" class="px-4 py-2 rounded border border-gray-300 w-full sm:w-2/3" required />
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Subscribe</button>
       </form>
@@ -128,11 +135,12 @@
       document.getElementById('mobile-menu').classList.toggle('hidden');
     });
 
-    // Scroll reveal animation
+    // Scroll reveal animation with console logs for debugging
     const revealEls = document.querySelectorAll('.fade-in');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
+          console.log('Element visible:', entry.target);
           entry.target.classList.add('visible');
         }
       });
