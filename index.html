@@ -31,6 +31,14 @@
       opacity: 1;
       transform: translateY(0);
     }
+    /* Modal scrollbar fix for overflow content if needed */
+    #course-modal::-webkit-scrollbar {
+      width: 6px;
+    }
+    #course-modal::-webkit-scrollbar-thumb {
+      background-color: rgba(0,0,0,0.2);
+      border-radius: 3px;
+    }
   </style>
 </head>
 <body class="bg-gray-50 font-sans relative">
@@ -44,10 +52,10 @@
     <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-4">
-          <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-16 w-16 sm:h-20 sm:w-20 object-contain" border="0" />
+          <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-16 w-16 sm:h-17 sm:w-17 object-contain" border="0" />
           <div>
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">Automation Lab</h1>
-            <p class="text-sm sm:text-base text-gray-600 leading-snug mt-0.5">Industrial IoT & Automation Training</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Automation Lab</h1>
+            <p class="text-xs sm:text-sm text-gray-600">Industrial IoT & Automation Training</p>
           </div>
         </div>
         <div class="sm:hidden">
@@ -85,18 +93,30 @@
     <div class="max-w-6xl mx-auto">
       <h3 class="text-xl sm:text-2xl font-bold text-center mb-10">Popular Courses</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition">
+        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"ESP32 + Firebase IoT","description":"Learn how to build cloud-connected IoT projects using Firebase and ESP32. Includes hands-on coding, deployment, and cloud integration.","duration":"6 weeks","price":"$49"}'>
           <h4 class="text-lg sm:text-xl font-semibold mb-2">ESP32 + Firebase IoT</h4>
           <p class="text-sm sm:text-base">Learn how to build cloud-connected IoT projects using Firebase and ESP32.</p>
         </div>
-        <div class="bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition">
+        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"MQTT & Industrial IoT","description":"Master MQTT protocol with Node-RED and cloud dashboards for industrial-grade IoT applications. Covers message brokering, security, and analytics.","duration":"5 weeks","price":"$59"}'>
           <h4 class="text-lg sm:text-xl font-semibold mb-2">MQTT & Industrial IoT</h4>
           <p class="text-sm sm:text-base">Master MQTT with Node-RED and cloud dashboards for industrial-grade applications.</p>
         </div>
-        <div class="bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition">
+        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"PLC Basics & Control","description":"Hands-on training with PLC programming, HMI integration, and industrial sensors for automation control.","duration":"4 weeks","price":"$39"}'>
           <h4 class="text-lg sm:text-xl font-semibold mb-2">PLC Basics & Control</h4>
           <p class="text-sm sm:text-base">Hands-on training with PLC, HMI, and industrial sensors for real-world automation.</p>
         </div>
+      </div>
+    </div>
+
+    <!-- Course Details Modal -->
+    <div id="course-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-50">
+      <div class="bg-white rounded-lg max-w-lg w-full p-6 relative shadow-lg">
+        <button id="course-modal-close" class="absolute top-3 right-3 text-gray-700 hover:text-gray-900 text-2xl font-bold">&times;</button>
+        <h3 id="modal-course-title" class="text-2xl font-bold mb-4"></h3>
+        <p id="modal-course-description" class="text-gray-700 mb-4"></p>
+        <p class="font-semibold">Duration: <span id="modal-course-duration"></span></p>
+        <p class="font-semibold mb-6">Price: <span id="modal-course-price"></span></p>
+        <button id="modal-buy-btn" class="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition">Buy This Course</button>
       </div>
     </div>
   </section>
@@ -196,6 +216,7 @@
 
   <!-- Scripts -->
   <script>
+    // Mobile menu toggle
     document.getElementById('menu-toggle').addEventListener('click', () => {
       document.getElementById('mobile-menu').classList.toggle('hidden');
     });
@@ -206,101 +227,156 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
         }
       });
     }, { threshold: 0.1 });
-
     revealEls.forEach(el => observer.observe(el));
 
-    // Cart Logic
+    // Cart logic
+    const cart = [];
     const cartItemsEl = document.getElementById('cart-items');
     const cartTotalEl = document.getElementById('cart-total');
-    const clearCartBtn = document.getElementById('clear-cart');
     const proceedPaymentBtn = document.getElementById('proceed-payment');
+    const clearCartBtn = document.getElementById('clear-cart');
     const emailModal = document.getElementById('email-modal');
     const emailForm = document.getElementById('email-form');
     const emailCancelBtn = document.getElementById('email-cancel');
-    const buyerEmailInput = document.getElementById('buyer-email');
 
-    let cart = [];
-
-    function updateProceedButton() {
-      proceedPaymentBtn.disabled = cart.length === 0;
-    }
-
+    // Render cart UI
     function renderCart() {
       cartItemsEl.innerHTML = '';
-      let total = 0;
-      cart.forEach((item, index) => {
-        total += item.price;
+      cart.forEach((item, idx) => {
         const li = document.createElement('li');
-        li.className = 'flex justify-between items-center py-2';
+        li.className = 'flex justify-between py-2';
         li.innerHTML = `
-          <div>
-            <p class="font-semibold">${item.name}</p>
-            <p class="text-sm text-gray-600">$${item.price}</p>
-          </div>
-          <button data-index="${index}" class="remove-btn text-red-600 hover:text-red-800 font-bold">&times;</button>
+          <span>${item.name}</span>
+          <span>$${item.price.toFixed(2)}</span>
+          <button data-idx="${idx}" class="text-red-600 hover:text-red-800 ml-4 font-bold">×</button>
         `;
         cartItemsEl.appendChild(li);
       });
-      cartTotalEl.textContent = total.toFixed(2);
 
-      // Attach remove event handlers
-      document.querySelectorAll('.remove-btn').forEach(btn => {
+      // Remove item on click
+      cartItemsEl.querySelectorAll('button').forEach(btn => {
         btn.addEventListener('click', e => {
-          const idx = e.target.getAttribute('data-index');
-          cart.splice(idx, 1);
+          const index = parseInt(e.target.getAttribute('data-idx'));
+          cart.splice(index, 1);
           renderCart();
           updateProceedButton();
         });
       });
+    }
+
+    // Update proceed button state and total price
+    function updateProceedButton() {
+      const total = cart.reduce((acc, cur) => acc + cur.price, 0);
+      cartTotalEl.textContent = total.toFixed(2);
+      proceedPaymentBtn.disabled = total === 0;
+    }
+
+    // Add item to cart
+    function addToCart(name, price) {
+      // Optional: prevent duplicate items
+      if (cart.some(item => item.name === name)) {
+        alert('This course is already in your cart.');
+        return;
+      }
+      cart.push({ name, price });
+      renderCart();
       updateProceedButton();
     }
 
-    clearCartBtn.addEventListener('click', () => {
-      cart.length = 0; // clear array
-      renderCart();
-      updateProceedButton();
-    });
-
-    document.querySelectorAll('.buy-btn').forEach(button => {
-      button.addEventListener('click', () => {
-        const name = button.getAttribute('data-name');
-        const price = parseFloat(button.getAttribute('data-price'));
-        cart.push({ name, price });
-        renderCart();
-        updateProceedButton();
+    // Buy buttons outside modal
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.getAttribute('data-name');
+        const price = parseFloat(btn.getAttribute('data-price'));
+        addToCart(name, price);
       });
     });
 
+    // Clear cart
+    clearCartBtn.addEventListener('click', () => {
+      if (confirm('Clear all items from the cart?')) {
+        cart.length = 0;
+        renderCart();
+        updateProceedButton();
+      }
+    });
+
+    // Proceed payment opens email modal
     proceedPaymentBtn.addEventListener('click', () => {
       emailModal.classList.remove('hidden');
-      buyerEmailInput.focus();
     });
 
+    // Cancel email modal
     emailCancelBtn.addEventListener('click', () => {
       emailModal.classList.add('hidden');
-      buyerEmailInput.value = '';
     });
 
+    // Submit email form
     emailForm.addEventListener('submit', e => {
       e.preventDefault();
-      const email = buyerEmailInput.value.trim();
-      if (!email) return alert('Please enter a valid email.');
-
-      // Example: Here you would integrate payment processing and email submission logic
-      alert(`Thank you! Payment link sent to ${email}.`);
-
+      const email = document.getElementById('buyer-email').value;
+      if (!email) {
+        alert('Please enter your email.');
+        return;
+      }
+      // Here, handle payment or form submission logic
+      alert(`Thank you! Purchase confirmed for ${email}.`);
       emailModal.classList.add('hidden');
-      buyerEmailInput.value = '';
       cart.length = 0;
       renderCart();
       updateProceedButton();
+      emailForm.reset();
     });
 
-    // Initialize cart button state
-    updateProceedButton();
+    // ----------- Course Modal Logic -------------
+    const courseModal = document.getElementById('course-modal');
+    const modalTitle = document.getElementById('modal-course-title');
+    const modalDescription = document.getElementById('modal-course-description');
+    const modalDuration = document.getElementById('modal-course-duration');
+    const modalPrice = document.getElementById('modal-course-price');
+    const modalBuyBtn = document.getElementById('modal-buy-btn');
+    const modalCloseBtn = document.getElementById('course-modal-close');
+
+    let selectedCourse = null;
+
+    // Show modal with course details
+    document.querySelectorAll('.course-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const courseData = JSON.parse(card.getAttribute('data-course'));
+        selectedCourse = courseData;
+
+        modalTitle.textContent = courseData.title;
+        modalDescription.textContent = courseData.description;
+        modalDuration.textContent = courseData.duration;
+        modalPrice.textContent = courseData.price;
+
+        courseModal.classList.remove('hidden');
+      });
+    });
+
+    // Close modal by close button
+    modalCloseBtn.addEventListener('click', () => {
+      courseModal.classList.add('hidden');
+    });
+
+    // Close modal by clicking outside modal content
+    courseModal.addEventListener('click', (e) => {
+      if (e.target === courseModal) {
+        courseModal.classList.add('hidden');
+      }
+    });
+
+    // Buy button inside modal
+    modalBuyBtn.addEventListener('click', () => {
+      if (!selectedCourse) return;
+      addToCart(selectedCourse.title, parseFloat(selectedCourse.price.replace('$','')));
+      courseModal.classList.add('hidden');
+    });
+
   </script>
 </body>
 </html>
