@@ -16,6 +16,10 @@
     body {
       font-family: 'Poppins', sans-serif;
     }
+    /* Force Poppins font everywhere, override Tailwind font-sans */
+    * {
+      font-family: 'Poppins', sans-serif !important;
+    }
     .fade-in {
       opacity: 0;
       transform: translateY(20px);
