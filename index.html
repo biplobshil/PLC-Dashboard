@@ -44,11 +44,10 @@
     <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-4">
-          <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-14 w-14 sm:h-16 sm:w-16 object-contain" border="0" />
-
+          <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-16 w-16 sm:h-20 sm:w-20 object-contain" border="0" />
           <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Automation Lab</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Industrial IoT & Automation Training</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">Automation Lab</h1>
+            <p class="text-sm sm:text-base text-gray-600 leading-snug mt-0.5">Industrial IoT & Automation Training</p>
           </div>
         </div>
         <div class="sm:hidden">
@@ -265,70 +264,43 @@
       updateProceedButton();
     });
 
-    document.querySelectorAll('.buy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const name = btn.getAttribute('data-name');
-        const price = parseFloat(btn.getAttribute('data-price'));
+    document.querySelectorAll('.buy-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const name = button.getAttribute('data-name');
+        const price = parseFloat(button.getAttribute('data-price'));
         cart.push({ name, price });
         renderCart();
         updateProceedButton();
       });
     });
 
-    // Proceed to payment button click
     proceedPaymentBtn.addEventListener('click', () => {
-      // Show email modal
       emailModal.classList.remove('hidden');
-      buyerEmailInput.value = '';
       buyerEmailInput.focus();
     });
 
-    // Cancel email input
     emailCancelBtn.addEventListener('click', () => {
       emailModal.classList.add('hidden');
+      buyerEmailInput.value = '';
     });
 
-    // Handle email form submission
     emailForm.addEventListener('submit', e => {
       e.preventDefault();
       const email = buyerEmailInput.value.trim();
-      if (!email) {
-        alert('Please enter a valid email.');
-        return;
-      }
-      
-      // Hide modal
+      if (!email) return alert('Please enter a valid email.');
+
+      // Example: Here you would integrate payment processing and email submission logic
+      alert(`Thank you! Payment link sent to ${email}.`);
+
       emailModal.classList.add('hidden');
-
-      // Calculate total amount
-      let total = cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
-
-      // Replace with your actual bKash Personal Retail Account payment link here:
-      const bkashPaymentUrl = 'https://bka.sh/your-personal-retail-account-link';
-
-      const productList = cart.map(item => `${item.name} ($${item.price})`).join('\n');
-
-      // Show payment info and confirm redirect
-      const proceed = confirm(
-        `Thank you for your purchase!\n\n` +
-        `Email: ${email}\n` +
-        `Items:\n${productList}\n\n` +
-        `Total: $${total}\n\n` +
-        `You will be redirected to bKash payment page.\n\n` +
-        `Click OK to proceed.`
-      );
-
-      if (proceed) {
-        window.location.href = bkashPaymentUrl;
-      } else {
-        alert('Payment cancelled.');
-      }
-
-      // Clear cart after
+      buyerEmailInput.value = '';
       cart.length = 0;
       renderCart();
       updateProceedButton();
     });
+
+    // Initialize cart button state
+    updateProceedButton();
   </script>
 </body>
 </html>
