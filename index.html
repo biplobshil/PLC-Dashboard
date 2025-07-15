@@ -94,15 +94,15 @@
     <div class="max-w-6xl mx-auto">
       <h3 class="text-xl sm:text-2xl font-bold text-center mb-10">Popular Courses</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"ESP32 + Firebase IoT","description":"Learn how to build cloud-connected IoT projects using Firebase and ESP32. Includes hands-on coding, deployment, and cloud integration.","duration":"6 weeks","price":"$49"}'>
+        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"ESP32 + Firebase IoT","description":"Learn how to build cloud-connected IoT projects using Firebase and ESP32. Includes hands-on coding, deployment, and cloud integration.","duration":"6 weeks","price":"BDT 50"}'>
           <h4 class="text-lg sm:text-xl font-semibold mb-2">ESP32 + Firebase IoT</h4>
           <p class="text-sm sm:text-base">Learn how to build cloud-connected IoT projects using Firebase and ESP32.</p>
         </div>
-        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"MQTT & Industrial IoT","description":"Master MQTT protocol with Node-RED and cloud dashboards for industrial-grade IoT applications. Covers message brokering, security, and analytics.","duration":"5 weeks","price":"$59"}'>
+        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"MQTT & Industrial IoT","description":"Master MQTT protocol with Node-RED and cloud dashboards for industrial-grade IoT applications. Covers message brokering, security, and analytics.","duration":"5 weeks","price":"BDT 200"}'>
           <h4 class="text-lg sm:text-xl font-semibold mb-2">MQTT & Industrial IoT</h4>
           <p class="text-sm sm:text-base">Master MQTT with Node-RED and cloud dashboards for industrial-grade applications.</p>
         </div>
-        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"PLC Basics & Control","description":"Hands-on training with PLC programming, HMI integration, and industrial sensors for automation control.","duration":"4 weeks","price":"$39"}'>
+        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"PLC Basics & Control","description":"Hands-on training with PLC programming, HMI integration, and industrial sensors for automation control.","duration":"4 weeks","price":"BDT 400"}'>
           <h4 class="text-lg sm:text-xl font-semibold mb-2">PLC Basics & Control</h4>
           <p class="text-sm sm:text-base">Hands-on training with PLC, HMI, and industrial sensors for real-world automation.</p>
         </div>
@@ -135,7 +135,7 @@
               <p class="text-sm text-gray-600">Build cloud-connected IoT projects with Firebase and ESP32.</p>
               <p class="mt-1 font-semibold">BDT 50</p>
             </div>
-            <button data-name="ESP32 + Firebase IoT" data-price="49" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
+            <button data-name="ESP32 + Firebase IoT" data-price="50" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
           </div>
           <div class="bg-white p-5 rounded-lg shadow flex justify-between items-center">
             <div>
@@ -143,7 +143,7 @@
               <p class="text-sm text-gray-600">Master MQTT with Node-RED and cloud dashboards.</p>
               <p class="mt-1 font-semibold">BDT 200</p>
             </div>
-            <button data-name="MQTT & Industrial IoT" data-price="59" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
+            <button data-name="MQTT & Industrial IoT" data-price="200" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
           </div>
           <div class="bg-white p-5 rounded-lg shadow flex justify-between items-center">
             <div>
@@ -151,7 +151,7 @@
               <p class="text-sm text-gray-600">Hands-on training with PLC and industrial sensors.</p>
               <p class="mt-1 font-semibold">BDT 400</p>
             </div>
-            <button data-name="PLC Basics & Control" data-price="39" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
+            <button data-name="PLC Basics & Control" data-price="400" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
           </div>
         </div>
       </div>
@@ -160,7 +160,7 @@
       <aside class="w-full lg:w-96 bg-white p-5 rounded-lg shadow sticky top-20 h-fit">
         <h3 class="text-xl font-bold mb-4">Your Cart</h3>
         <ul id="cart-items" class="divide-y divide-gray-200 max-h-72 overflow-y-auto mb-4"></ul>
-        <p class="font-semibold text-lg mb-4">Total: BDT<span id="cart-total">0</span></p>
+        <p class="font-semibold text-lg mb-4">Total:  BDT<span id="cart-total">0</span></p>
         <button id="clear-cart" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full mb-4">Clear Cart</button>
         <button id="proceed-payment" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition w-full" disabled>Proceed to Payment</button>
 
@@ -252,7 +252,7 @@
         li.className = 'flex justify-between py-2';
         li.innerHTML = `
           <span>${item.name}</span>
-          <span>$${item.price.toFixed(2)}</span>
+          <span>BDT ${item.price.toFixed(0)}</span>
           <button data-idx="${idx}" class="text-red-600 hover:text-red-800 ml-4 font-bold">×</button>
         `;
         cartItemsEl.appendChild(li);
@@ -272,7 +272,7 @@
     // Update proceed button state and total price
     function updateProceedButton() {
       const total = cart.reduce((acc, cur) => acc + cur.price, 0);
-      cartTotalEl.textContent = total.toFixed(2);
+      cartTotalEl.textContent = total.toFixed(0);
       proceedPaymentBtn.disabled = total === 0;
     }
 
@@ -353,7 +353,8 @@
         modalTitle.textContent = courseData.title;
         modalDescription.textContent = courseData.description;
         modalDuration.textContent = courseData.duration;
-        modalPrice.textContent = courseData.price;
+        modalPrice.textContent = `BDT ${parseFloat(courseData.price).toFixed(0)}`;
+
 
         courseModal.classList.remove('hidden');
       });
@@ -374,7 +375,7 @@
     // Buy button inside modal
     modalBuyBtn.addEventListener('click', () => {
       if (!selectedCourse) return;
-      addToCart(selectedCourse.title, parseFloat(selectedCourse.price.replace('$','')));
+      addToCart(selectedCourse.title, parseFloat(selectedCourse.price));
       courseModal.classList.add('hidden');
     });
 
