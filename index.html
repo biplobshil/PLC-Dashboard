@@ -31,7 +31,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-    /* Modal scrollbar fix for overflow content if needed */
     #course-modal::-webkit-scrollbar {
       width: 6px;
     }
@@ -39,346 +38,56 @@
       background-color: rgba(0,0,0,0.2);
       border-radius: 3px;
     }
+    .modal-overlay {
+      background-color: rgba(0,0,0,0.5);
+    }
   </style>
 </head>
 <body class="bg-gray-50 font-sans relative">
-  <!-- Back to Top Button -->
-  <button onclick="window.scrollTo({ top: 0, behavior: 'smooth' });" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition z-50" title="Back to top">
-    ↑
-  </button>
 
-  <!-- Header -->
-  <header class="bg-white shadow sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center">
-        <div class="flex items-center space-x-4">
-          <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-20 w-20 sm:h-24 sm:w-24 object-contain" />
+<!-- Custom Alert/Confirm Modals -->
+<div id="custom-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-auto text-center">
+    <h3 id="modal-title" class="text-xl font-semibold mb-4">Notice</h3>
+    <p id="modal-message" class="text-gray-700 mb-6"></p>
+    <div id="modal-buttons" class="flex justify-center gap-4"></div>
+  </div>
+</div>
 
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Automation Lab</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Industrial IoT & Automation Training</p>
-          </div>
-        </div>
-        <div class="sm:hidden">
-          <button id="menu-toggle" class="text-gray-700 focus:outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-        <nav class="hidden sm:flex space-x-6 text-sm">
-          <a href="#" class="text-gray-700 hover:text-blue-600">Home</a>
-          <a href="#courses" class="text-gray-700 hover:text-blue-600">Courses</a>
-          <a href="#contact" class="text-gray-700 hover:text-blue-600">Contact</a>
-        </nav>
-      </div>
-      <div id="mobile-menu" class="sm:hidden hidden mt-4 space-y-2">
-        <a href="#" class="block text-gray-700 hover:text-blue-600">Home</a>
-        <a href="#courses" class="block text-gray-700 hover:text-blue-600">Courses</a>
-        <a href="#contact" class="block text-gray-700 hover:text-blue-600">Contact</a>
-      </div>
-    </div>
-  </header>
+<script>
+  const modalEl = document.getElementById('custom-modal');
+  const modalMsg = document.getElementById('modal-message');
+  const modalBtns = document.getElementById('modal-buttons');
 
-  <!-- Hero Section -->
-  <section class="bg-blue-600 text-white py-16 sm:py-20 px-4 fade-in">
-    <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl sm:text-4xl font-bold mb-4">Hands-On IoT & PLC Training</h2>
-      <p class="text-base sm:text-lg mb-6">Master ESP32, MQTT, Firebase, PLC, SCADA & Flutter with real-world industrial projects.</p>
-      <a href="#courses" class="bg-white text-blue-600 font-semibold py-2 px-4 rounded hover:bg-gray-200 transition inline-block">Explore Courses</a>
-    </div>
-  </section>
+  function showAlert(message) {
+    modalMsg.textContent = message;
+    modalBtns.innerHTML = '<button class="bg-blue-600 text-white px-4 py-2 rounded" onclick="closeModal()">OK</button>';
+    modalEl.classList.remove('hidden');
+  }
 
-  <!-- Courses Section -->
-  <section id="courses" class="py-14 sm:py-16 bg-white px-4 fade-in">
-    <div class="max-w-6xl mx-auto">
-      <h3 class="text-xl sm:text-2xl font-bold text-center mb-10">Popular Courses</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"ESP32 + Firebase IoT","description":"Learn how to build cloud-connected IoT projects using Firebase and ESP32. Includes hands-on coding, deployment, and cloud integration.","duration":"6 weeks","price":"BDT 50"}'>
-          <h4 class="text-lg sm:text-xl font-semibold mb-2">ESP32 + Firebase IoT</h4>
-          <p class="text-sm sm:text-base">Learn how to build cloud-connected IoT projects using Firebase and ESP32.</p>
-        </div>
-        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"MQTT & Industrial IoT","description":"Master MQTT protocol with Node-RED and cloud dashboards for industrial-grade IoT applications. Covers message brokering, security, and analytics.","duration":"5 weeks","price":"BDT 200"}'>
-          <h4 class="text-lg sm:text-xl font-semibold mb-2">MQTT & Industrial IoT</h4>
-          <p class="text-sm sm:text-base">Master MQTT with Node-RED and cloud dashboards for industrial-grade applications.</p>
-        </div>
-        <div class="course-card cursor-pointer bg-gray-100 p-5 rounded-lg shadow hover:shadow-md transition" data-course='{"title":"PLC Basics & Control","description":"Hands-on training with PLC programming, HMI integration, and industrial sensors for automation control.","duration":"4 weeks","price":"BDT 400"}'>
-          <h4 class="text-lg sm:text-xl font-semibold mb-2">PLC Basics & Control</h4>
-          <p class="text-sm sm:text-base">Hands-on training with PLC, HMI, and industrial sensors for real-world automation.</p>
-        </div>
-      </div>
-    </div>
+  function showConfirm(message, callback) {
+    modalMsg.textContent = message;
+    modalBtns.innerHTML = `
+      <button class="bg-gray-300 text-gray-800 px-4 py-2 rounded" onclick="confirmResponse(false)">Cancel</button>
+      <button class="bg-blue-600 text-white px-4 py-2 rounded" onclick="confirmResponse(true)">OK</button>
+    `;
+    modalEl.classList.remove('hidden');
+    window.confirmCallback = callback;
+  }
 
-    <!-- Course Details Modal -->
-    <div id="course-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-50">
-      <div class="bg-white rounded-lg max-w-lg w-full p-6 relative shadow-lg">
-        <button id="course-modal-close" class="absolute top-3 right-3 text-gray-700 hover:text-gray-900 text-2xl font-bold">&times;</button>
-        <h3 id="modal-course-title" class="text-2xl font-bold mb-4"></h3>
-        <p id="modal-course-description" class="text-gray-700 mb-4"></p>
-        <p class="font-semibold">Duration: <span id="modal-course-duration"></span></p>
-        <p class="font-semibold mb-6">Price: <span id="modal-course-price"></span></p>
-        <button id="modal-buy-btn" class="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition">Buy This Course</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Buy Course Section -->
-  <section id="buy-course" class="py-14 sm:py-16 bg-gray-50 px-4 fade-in">
-    <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
-      <!-- Course List -->
-      <div class="flex-1">
-        <h3 class="text-xl sm:text-2xl font-bold mb-6">Buy Courses</h3>
-        <div class="space-y-4">
-          <div class="bg-white p-5 rounded-lg shadow flex justify-between items-center">
-            <div>
-              <h4 class="text-lg font-semibold">ESP32 + Firebase IoT</h4>
-              <p class="text-sm text-gray-600">Build cloud-connected IoT projects with Firebase and ESP32.</p>
-              <p class="mt-1 font-semibold">BDT 50</p>
-            </div>
-            <button data-name="ESP32 + Firebase IoT" data-price="50" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
-          </div>
-          <div class="bg-white p-5 rounded-lg shadow flex justify-between items-center">
-            <div>
-              <h4 class="text-lg font-semibold">MQTT & Industrial IoT</h4>
-              <p class="text-sm text-gray-600">Master MQTT with Node-RED and cloud dashboards.</p>
-              <p class="mt-1 font-semibold">BDT 200</p>
-            </div>
-            <button data-name="MQTT & Industrial IoT" data-price="200" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
-          </div>
-          <div class="bg-white p-5 rounded-lg shadow flex justify-between items-center">
-            <div>
-              <h4 class="text-lg font-semibold">PLC Basics & Control</h4>
-              <p class="text-sm text-gray-600">Hands-on training with PLC and industrial sensors.</p>
-              <p class="mt-1 font-semibold">BDT 400</p>
-            </div>
-            <button data-name="PLC Basics & Control" data-price="400" class="buy-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buy</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cart Panel -->
-      <aside class="w-full lg:w-96 bg-white p-5 rounded-lg shadow sticky top-20 h-fit">
-        <h3 class="text-xl font-bold mb-4">Your Cart</h3>
-        <ul id="cart-items" class="divide-y divide-gray-200 max-h-72 overflow-y-auto mb-4"></ul>
-        <p class="font-semibold text-lg mb-4">Total:  BDT<span id="cart-total">0</span></p>
-        <button id="clear-cart" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full mb-4">Clear Cart</button>
-        <button id="proceed-payment" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition w-full" disabled>Proceed to Payment</button>
-
-        <!-- Email form modal -->
-        <div id="email-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-          <div class="bg-white rounded-lg max-w-md w-full p-6 relative">
-            <h3 class="text-xl font-bold mb-4">Enter Your Email</h3>
-            <form id="email-form" class="flex flex-col gap-4">
-              <input type="email" id="buyer-email" placeholder="Your email" required class="px-4 py-2 border border-gray-300 rounded" />
-              <div class="flex justify-end gap-4">
-                <button type="button" id="email-cancel" class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100">Cancel</button>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Continue</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </section>
-
-  <!-- Contact Section -->
-  <section id="contact" class="py-14 sm:py-16 bg-blue-50 px-4 fade-in">
-    <div class="max-w-3xl mx-auto text-center">
-      <h3 class="text-xl sm:text-2xl font-bold mb-4">Get in Touch</h3>
-      <p class="mb-6 text-sm sm:text-base">Want to join a workshop or collaborate? Let’s talk!</p>
-      <a href="mailto:biplob@automationlab.tech" class="bg-blue-600 text-white py-2 px-5 rounded hover:bg-blue-700 transition inline-block">Contact Now</a>
-    </div>
-  </section>
-
-  <!-- Newsletter Section -->
-  <section class="py-14 sm:py-16 bg-white px-4 fade-in">
-    <div class="max-w-md mx-auto text-center">
-      <h3 class="text-xl sm:text-2xl font-bold mb-4">Subscribe to Newsletter</h3>
-      <p class="text-sm sm:text-base mb-6">Stay updated with upcoming training and automation insights.</p>
-      <form class="flex flex-col sm:flex-row gap-3 justify-center" onsubmit="event.preventDefault(); alert('Subscribed!');">
-        <input type="email" placeholder="Your email" class="px-4 py-2 rounded border border-gray-300 w-full sm:w-2/3" required />
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Subscribe</button>
-      </form>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="bg-gray-800 text-white py-6 text-center text-sm sm:text-base">
-    <div class="mb-2">
-      <a href="https://youtube.com/" class="inline-block mx-2 hover:text-red-500" target="_blank" rel="noopener" title="YouTube">
-        <svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M10 15l5.19-3L10 9v6z"/><path d="M21.8 8s-.2-1.42-.8-2.05c-.8-.8-1.7-.8-2.12-.85C16.4 5 12 5 12 5h0s-4.4 0-6.88.1c-.42.04-1.32.04-2.12.85C2.4 6.58 2.2 8 2.2 8S2 9.6 2 11.2v1.6C2 14.4 2.2 16 2.2 16s.2 1.42.8 2.05c.8.8 1.85.78 2.3.87C7.6 19 12 19 12 19s4.4 0 6.88-.1c.42-.04 1.32-.04 2.12-.85.6-.63.8-2.05.8-2.05S22 14.4 22 12.8v-1.6C22 9.6 21.8 8 21.8 8z"/></svg>
-      </a>
-      <a href="https://github.com/" class="inline-block mx-2 hover:text-gray-400" target="_blank" rel="noopener" title="GitHub">
-        <svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-3.16 19.49c.5.1.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.13-1.1-1.43-1.1-1.43-.9-.6.07-.6.07-.6 1 .07 1.53 1.06 1.53 1.06.9 1.52 2.38 1.08 2.96.82.1-.66.35-1.08.63-1.32-2.22-.26-4.56-1.12-4.56-5a3.92 3.92 0 011.05-2.7 3.6 3.6 0 01.1-2.67s.84-.26 2.75 1.02a9.4 9.4 0 015 0C15.25 6.35 16.1 6.6 16.1 6.6a3.6 3.6 0 01.1 2.67 3.92 3.92 0 011.05 2.7c0 3.9-2.34 4.74-4.58 5a2.44 2.44 0 01.7 1.87v2.76c0 .26.18.58.7.48A10 10 0 0012 2z"/></svg>
-      </a>
-    </div>
-    <p>&copy; 2025 Automation Lab. All rights reserved.</p>
-  </footer>
-
-  <!-- Scripts -->
-  <script>
-    // Mobile menu toggle
-    document.getElementById('menu-toggle').addEventListener('click', () => {
-      document.getElementById('mobile-menu').classList.toggle('hidden');
-    });
-
-    // Scroll reveal animation
-    const revealEls = document.querySelectorAll('.fade-in');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
-    revealEls.forEach(el => observer.observe(el));
-
-    // Cart logic
-    const cart = [];
-    const cartItemsEl = document.getElementById('cart-items');
-    const cartTotalEl = document.getElementById('cart-total');
-    const proceedPaymentBtn = document.getElementById('proceed-payment');
-    const clearCartBtn = document.getElementById('clear-cart');
-    const emailModal = document.getElementById('email-modal');
-    const emailForm = document.getElementById('email-form');
-    const emailCancelBtn = document.getElementById('email-cancel');
-
-    // Render cart UI
-    function renderCart() {
-      cartItemsEl.innerHTML = '';
-      cart.forEach((item, idx) => {
-        const li = document.createElement('li');
-        li.className = 'flex justify-between py-2';
-        li.innerHTML = `
-          <span>${item.name}</span>
-          <span>BDT ${item.price.toFixed(0)}</span>
-          <button data-idx="${idx}" class="text-red-600 hover:text-red-800 ml-4 font-bold">×</button>
-        `;
-        cartItemsEl.appendChild(li);
-      });
-
-      // Remove item on click
-      cartItemsEl.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const index = parseInt(e.target.getAttribute('data-idx'));
-          cart.splice(index, 1);
-          renderCart();
-          updateProceedButton();
-        });
-      });
+  function confirmResponse(choice) {
+    closeModal();
+    if (typeof window.confirmCallback === 'function') {
+      window.confirmCallback(choice);
+      window.confirmCallback = null;
     }
+  }
 
-    // Update proceed button state and total price
-    function updateProceedButton() {
-      const total = cart.reduce((acc, cur) => acc + cur.price, 0);
-      cartTotalEl.textContent = total.toFixed(0);
-      proceedPaymentBtn.disabled = total === 0;
-    }
+  function closeModal() {
+    modalEl.classList.add('hidden');
+  }
+</script>
 
-    // Add item to cart
-    function addToCart(name, price) {
-      // Optional: prevent duplicate items
-      if (cart.some(item => item.name === name)) {
-        alert('This course is already in your cart.');
-        return;
-      }
-      cart.push({ name, price });
-      renderCart();
-      updateProceedButton();
-    }
+<!-- Rest of your HTML remains unchanged... -->
 
-    // Buy buttons outside modal
-    document.querySelectorAll('.buy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const name = btn.getAttribute('data-name');
-        const price = parseFloat(btn.getAttribute('data-price'));
-        addToCart(name, price);
-      });
-    });
-
-    // Clear cart
-    clearCartBtn.addEventListener('click', () => {
-      if (confirm('Clear all items from the cart?')) {
-        cart.length = 0;
-        renderCart();
-        updateProceedButton();
-      }
-    });
-
-    // Proceed payment opens email modal
-    proceedPaymentBtn.addEventListener('click', () => {
-      emailModal.classList.remove('hidden');
-    });
-
-    // Cancel email modal
-    emailCancelBtn.addEventListener('click', () => {
-      emailModal.classList.add('hidden');
-    });
-
-    // Submit email form
-    emailForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const email = document.getElementById('buyer-email').value;
-      if (!email) {
-        alert('Please enter your email.');
-        return;
-      }
-      // Here, handle payment or form submission logic
-      alert(`Thank you! Purchase confirmed for ${email}.`);
-      emailModal.classList.add('hidden');
-      cart.length = 0;
-      renderCart();
-      updateProceedButton();
-      emailForm.reset();
-    });
-
-    // ----------- Course Modal Logic -------------
-    const courseModal = document.getElementById('course-modal');
-    const modalTitle = document.getElementById('modal-course-title');
-    const modalDescription = document.getElementById('modal-course-description');
-    const modalDuration = document.getElementById('modal-course-duration');
-    const modalPrice = document.getElementById('modal-course-price');
-    const modalBuyBtn = document.getElementById('modal-buy-btn');
-    const modalCloseBtn = document.getElementById('course-modal-close');
-
-    let selectedCourse = null;
-
-    // Show modal with course details
-    document.querySelectorAll('.course-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const courseData = JSON.parse(card.getAttribute('data-course'));
-        selectedCourse = courseData;
-
-        modalTitle.textContent = courseData.title;
-        modalDescription.textContent = courseData.description;
-        modalDuration.textContent = courseData.duration;
-        modalPrice.textContent = `BDT ${parseFloat(courseData.price).toFixed(0)}`;
-
-
-        courseModal.classList.remove('hidden');
-      });
-    });
-
-    // Close modal by close button
-    modalCloseBtn.addEventListener('click', () => {
-      courseModal.classList.add('hidden');
-    });
-
-    // Close modal by clicking outside modal content
-    courseModal.addEventListener('click', (e) => {
-      if (e.target === courseModal) {
-        courseModal.classList.add('hidden');
-      }
-    });
-
-    // Buy button inside modal
-    modalBuyBtn.addEventListener('click', () => {
-      if (!selectedCourse) return;
-      addToCart(selectedCourse.title, parseFloat(selectedCourse.price));
-      courseModal.classList.add('hidden');
-    });
-
-  </script>
-</body>
-</html>
+<!-- Keep the rest of your existing HTML content unchanged here -->
