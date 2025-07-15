@@ -216,169 +216,191 @@
   </footer>
 
   <!-- Scripts -->
-  <script>
-    // Mobile menu toggle
-    document.getElementById('menu-toggle').addEventListener('click', () => {
-      document.getElementById('mobile-menu').classList.toggle('hidden');
-    });
+<script>
+  // Mobile menu toggle
+  document.getElementById('menu-toggle').addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.toggle('hidden');
+  });
 
-    // Scroll reveal animation
-    const revealEls = document.querySelectorAll('.fade-in');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
-    revealEls.forEach(el => observer.observe(el));
-
-    // Cart logic
-    const cart = [];
-    const cartItemsEl = document.getElementById('cart-items');
-    const cartTotalEl = document.getElementById('cart-total');
-    const proceedPaymentBtn = document.getElementById('proceed-payment');
-    const clearCartBtn = document.getElementById('clear-cart');
-    const emailModal = document.getElementById('email-modal');
-    const emailForm = document.getElementById('email-form');
-    const emailCancelBtn = document.getElementById('email-cancel');
-
-    // Render cart UI
-    function renderCart() {
-      cartItemsEl.innerHTML = '';
-      cart.forEach((item, idx) => {
-        const li = document.createElement('li');
-        li.className = 'flex justify-between py-2';
-        li.innerHTML = `
-          <span>${item.name}</span>
-          <span>BDT ${item.price.toFixed(0)}</span>
-          <button data-idx="${idx}" class="text-red-600 hover:text-red-800 ml-4 font-bold">×</button>
-        `;
-        cartItemsEl.appendChild(li);
-      });
-
-      // Remove item on click
-      cartItemsEl.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const index = parseInt(e.target.getAttribute('data-idx'));
-          cart.splice(index, 1);
-          renderCart();
-          updateProceedButton();
-        });
-      });
-    }
-
-    // Update proceed button state and total price
-    function updateProceedButton() {
-      const total = cart.reduce((acc, cur) => acc + cur.price, 0);
-      cartTotalEl.textContent = total.toFixed(0);
-      proceedPaymentBtn.disabled = total === 0;
-    }
-
-    // Add item to cart
-    function addToCart(name, price) {
-      // Optional: prevent duplicate items
-      if (cart.some(item => item.name === name)) {
-        alert('This course is already in your cart.');
-        return;
+  // Scroll reveal animation
+  const revealEls = document.querySelectorAll('.fade-in');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
       }
-      cart.push({ name, price });
-      renderCart();
-      updateProceedButton();
-    }
+    });
+  }, { threshold: 0.1 });
+  revealEls.forEach(el => observer.observe(el));
 
-    // Buy buttons outside modal
-    document.querySelectorAll('.buy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const name = btn.getAttribute('data-name');
-        const price = parseFloat(btn.getAttribute('data-price'));
-        addToCart(name, price);
-      });
+  // Cart logic
+  const cart = [];
+  const cartItemsEl = document.getElementById('cart-items');
+  const cartTotalEl = document.getElementById('cart-total');
+  const proceedPaymentBtn = document.getElementById('proceed-payment');
+  const clearCartBtn = document.getElementById('clear-cart');
+  const emailModal = document.getElementById('email-modal');
+  const emailForm = document.getElementById('email-form');
+  const emailCancelBtn = document.getElementById('email-cancel');
+
+  // Render cart UI
+  function renderCart() {
+    cartItemsEl.innerHTML = '';
+    cart.forEach((item, idx) => {
+      const li = document.createElement('li');
+      li.className = 'flex justify-between py-2';
+      li.innerHTML = `
+        <span>${item.name}</span>
+        <span>BDT ${item.price.toFixed(0)}</span>
+        <button data-idx="${idx}" class="text-red-600 hover:text-red-800 ml-4 font-bold">×</button>
+      `;
+      cartItemsEl.appendChild(li);
     });
 
-    // Clear cart
-    clearCartBtn.addEventListener('click', () => {
-      if (confirm('Clear all items from the cart?')) {
-        cart.length = 0;
+    // Remove item on click
+    cartItemsEl.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const index = parseInt(e.target.getAttribute('data-idx'));
+        cart.splice(index, 1);
         renderCart();
         updateProceedButton();
-      }
+      });
     });
+  }
 
-    // Proceed payment opens email modal
-    proceedPaymentBtn.addEventListener('click', () => {
-      emailModal.classList.remove('hidden');
+  // Update proceed button state and total price
+  function updateProceedButton() {
+    const total = cart.reduce((acc, cur) => acc + cur.price, 0);
+    cartTotalEl.textContent = total.toFixed(0);
+    proceedPaymentBtn.disabled = total === 0;
+  }
+
+  // Add item to cart
+  function addToCart(name, price) {
+    if (cart.some(item => item.name === name)) {
+      alert('This course is already in your cart.');
+      return;
+    }
+    cart.push({ name, price });
+    renderCart();
+    updateProceedButton();
+  }
+
+  // Buy buttons outside modal
+  document.querySelectorAll('.buy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.getAttribute('data-name');
+      const price = parseFloat(btn.getAttribute('data-price'));
+      addToCart(name, price);
     });
+  });
 
-    // Cancel email modal
-    emailCancelBtn.addEventListener('click', () => {
-      emailModal.classList.add('hidden');
-    });
-
-    // Submit email form
-    emailForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const email = document.getElementById('buyer-email').value;
-      if (!email) {
-        alert('Please enter your email.');
-        return;
-      }
-      // Here, handle payment or form submission logic
-      alert(`Thank you! Purchase confirmed for ${email}.`);
-      emailModal.classList.add('hidden');
+  // Clear cart
+  clearCartBtn.addEventListener('click', () => {
+    if (confirm('Clear all items from the cart?')) {
       cart.length = 0;
       renderCart();
       updateProceedButton();
-      emailForm.reset();
+    }
+  });
+
+  // Proceed payment opens email modal
+  proceedPaymentBtn.addEventListener('click', () => {
+    emailModal.classList.remove('hidden');
+    document.getElementById('buyer-email').value = '';
+    document.getElementById('buyer-email').focus();
+  });
+
+  // Cancel email modal
+  emailCancelBtn.addEventListener('click', () => {
+    emailModal.classList.add('hidden');
+  });
+
+  // Submit email form and redirect to bKash payment page
+  emailForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('buyer-email').value.trim();
+    if (!email) {
+      alert('Please enter your email.');
+      return;
+    }
+
+    emailModal.classList.add('hidden');
+
+    const total = cart.reduce((sum, item) => sum + item.price, 0).toFixed(0);
+
+    // Replace this URL with your actual bKash Personal Retail Account payment link
+    const bkashPaymentUrl = 'https://bka.sh/your-personal-retail-account-link';
+
+    const productList = cart.map(item => `${item.name} (BDT ${item.price.toFixed(0)})`).join('\n');
+
+    const proceed = confirm(
+      `Thank you for your purchase!\n\n` +
+      `Email: ${email}\n` +
+      `Items:\n${productList}\n\n` +
+      `Total: BDT ${total}\n\n` +
+      `You will be redirected to the bKash payment page.\n\n` +
+      `Click OK to proceed.`
+    );
+
+    if (proceed) {
+      window.location.href = bkashPaymentUrl;
+    } else {
+      alert('Payment cancelled.');
+    }
+
+    cart.length = 0;
+    renderCart();
+    updateProceedButton();
+    emailForm.reset();
+  });
+
+  // ----------- Course Modal Logic -------------
+  const courseModal = document.getElementById('course-modal');
+  const modalTitle = document.getElementById('modal-course-title');
+  const modalDescription = document.getElementById('modal-course-description');
+  const modalDuration = document.getElementById('modal-course-duration');
+  const modalPrice = document.getElementById('modal-course-price');
+  const modalBuyBtn = document.getElementById('modal-buy-btn');
+  const modalCloseBtn = document.getElementById('course-modal-close');
+
+  let selectedCourse = null;
+
+  // Show modal with course details
+  document.querySelectorAll('.course-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const courseData = JSON.parse(card.getAttribute('data-course'));
+      selectedCourse = courseData;
+
+      modalTitle.textContent = courseData.title;
+      modalDescription.textContent = courseData.description;
+      modalDuration.textContent = courseData.duration;
+      modalPrice.textContent = `BDT ${parseFloat(courseData.price).toFixed(0)}`;
+
+      courseModal.classList.remove('hidden');
     });
+  });
 
-    // ----------- Course Modal Logic -------------
-    const courseModal = document.getElementById('course-modal');
-    const modalTitle = document.getElementById('modal-course-title');
-    const modalDescription = document.getElementById('modal-course-description');
-    const modalDuration = document.getElementById('modal-course-duration');
-    const modalPrice = document.getElementById('modal-course-price');
-    const modalBuyBtn = document.getElementById('modal-buy-btn');
-    const modalCloseBtn = document.getElementById('course-modal-close');
+  // Close modal by close button
+  modalCloseBtn.addEventListener('click', () => {
+    courseModal.classList.add('hidden');
+  });
 
-    let selectedCourse = null;
-
-    // Show modal with course details
-    document.querySelectorAll('.course-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const courseData = JSON.parse(card.getAttribute('data-course'));
-        selectedCourse = courseData;
-
-        modalTitle.textContent = courseData.title;
-        modalDescription.textContent = courseData.description;
-        modalDuration.textContent = courseData.duration;
-        modalPrice.textContent = `BDT ${parseFloat(courseData.price).toFixed(0)}`;
-
-
-        courseModal.classList.remove('hidden');
-      });
-    });
-
-    // Close modal by close button
-    modalCloseBtn.addEventListener('click', () => {
+  // Close modal by clicking outside modal content
+  courseModal.addEventListener('click', (e) => {
+    if (e.target === courseModal) {
       courseModal.classList.add('hidden');
-    });
+    }
+  });
 
-    // Close modal by clicking outside modal content
-    courseModal.addEventListener('click', (e) => {
-      if (e.target === courseModal) {
-        courseModal.classList.add('hidden');
-      }
-    });
+  // Buy button inside modal
+  modalBuyBtn.addEventListener('click', () => {
+    if (!selectedCourse) return;
+    addToCart(selectedCourse.title, parseFloat(selectedCourse.price));
+    courseModal.classList.add('hidden');
+  });
+</script>
 
-    // Buy button inside modal
-    modalBuyBtn.addEventListener('click', () => {
-      if (!selectedCourse) return;
-      addToCart(selectedCourse.title, parseFloat(selectedCourse.price));
-      courseModal.classList.add('hidden');
-    });
-
-  </script>
 </body>
 </html>
