@@ -40,9 +40,7 @@
     <div id="pdfContent" class="p-4 bg-white rounded shadow">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-4">
-         <!-- <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="Logo" class="w-12 h-12" /> -->
-        <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-20 w-20 sm:h-24 sm:w-24 object-contain" /> 
-
+          <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="Logo" class="w-12 h-12" />
           <div>
             <h2 class="text-xl font-bold text-gray-700">TechSkills Journey PLC Report</h2>
             <p class="text-sm text-gray-500">Generated on: <span id="printDate"></span></p>
@@ -76,7 +74,7 @@
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
       const seconds = String(date.getSeconds()).padStart(2, '0');
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      return ${year}-${month}-${day} ${hours}:${minutes}:${seconds};
     }
 
     function updatePrintDate() {
@@ -104,12 +102,12 @@
       const tbody = document.getElementById("dataBody");
       tbody.innerHTML = "";
       data.forEach(row => {
-        tbody.innerHTML += `
+        tbody.innerHTML += 
           <tr class="page-break-inside-avoid">
             <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
             <td class="p-2 border">${row.sensor1}</td>
             <td class="p-2 border">${row.sensor2}</td>
-          </tr>`;
+          </tr>;
       });
     }
 
@@ -134,7 +132,7 @@
 
       let csv = "Timestamp,Sensor1,Sensor2\n";
       filtered.forEach(row => {
-        csv += `${formatDateTime(row.timestamp)},${row.sensor1},${row.sensor2}\n`;
+        csv += ${formatDateTime(row.timestamp)},${row.sensor1},${row.sensor2}\n;
       });
 
       const blob = new Blob([csv], { type: "text/csv" });
@@ -142,7 +140,7 @@
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = `PLC_Report_${formatDateTime(from.toISOString())}_to_${formatDateTime(to.toISOString())}.csv`;
+      a.download = PLC_Report_${formatDateTime(from.toISOString())}_to_${formatDateTime(to.toISOString())}.csv;
       a.click();
     }
 
@@ -171,21 +169,21 @@
       const tbody = document.getElementById("dataBody");
       tbody.innerHTML = "";
       filtered.forEach(row => {
-        tbody.innerHTML += `
+        tbody.innerHTML += 
           <tr class="page-break-inside-avoid">
             <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
             <td class="p-2 border">${row.sensor1}</td>
             <td class="p-2 border">${row.sensor2}</td>
-          </tr>`;
+          </tr>;
       });
 
       updatePrintDate();
-      createQRCode(`PLC Report\nFrom: ${formatDateTime(fromInput)}\nTo: ${formatDateTime(toInput)}`);
+      createQRCode(PLC Report\nFrom: ${formatDateTime(fromInput)}\nTo: ${formatDateTime(toInput)});
 
       const element = document.getElementById("pdfContent");
       const opt = {
         margin: 0.5,
-        filename: `PLC_Report_${fromInput}_to_${toInput}.pdf`,
+        filename: PLC_Report_${fromInput}_to_${toInput}.pdf,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
