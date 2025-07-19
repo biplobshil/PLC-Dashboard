@@ -7,16 +7,33 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
     .page-break-inside-avoid {
       page-break-inside: avoid;
       break-inside: avoid;
+    }
+    .custom-alert {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      text-align: center;
     }
   </style>
 </head>
 <body class="bg-gray-100 font-sans">
   <div class="max-w-6xl mx-auto p-6">
     <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">PLC Live Data with Export</h1>
+
+    <!-- Alert Placeholder -->
+    <div id="alertBox" class="hidden custom-alert">Please select both From and To date/time.</div>
 
     <!-- Filters and Export Buttons -->
     <div class="flex flex-wrap gap-4 mb-6 justify-center items-end">
@@ -79,6 +96,13 @@
     let allData = [];
     let exportAction = null;
 
+    function showAlert(message) {
+      const alertBox = document.getElementById("alertBox");
+      alertBox.innerText = message;
+      alertBox.classList.remove("hidden");
+      setTimeout(() => alertBox.classList.add("hidden"), 3000);
+    }
+
     function formatDateTime(isoString) {
       const date = new Date(isoString);
       const year = date.getFullYear();
@@ -97,11 +121,7 @@
     function createQRCode(content) {
       const qrDiv = document.getElementById("qrcode");
       qrDiv.innerHTML = "";
-      new QRCode(qrDiv, {
-        text: content,
-        width: 80,
-        height: 80
-      });
+      new QRCode(qrDiv, { text: content, width: 80, height: 80 });
     }
 
     async function fetchData() {
@@ -115,12 +135,7 @@
       const tbody = document.getElementById("dataBody");
       tbody.innerHTML = "";
       data.forEach(row => {
-        tbody.innerHTML += `
-          <tr class="page-break-inside-avoid">
-            <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
-            <td class="p-2 border">${row.sensor1}</td>
-            <td class="p-2 border">${row.sensor2}</td>
-          </tr>`;
+        tbody.innerHTML += `<tr class="page-break-inside-avoid"><td class="p-2 border">${formatDateTime(row.timestamp)}</td><td class="p-2 border">${row.sensor1}</td><td class="p-2 border">${row.sensor2}</td></tr>`;
       });
     }
 
@@ -151,18 +166,9 @@
     function exportCSV() {
       const from = new Date(document.getElementById("fromTime").value);
       const to = new Date(document.getElementById("toTime").value);
-      if (isNaN(from) || isNaN(to)) {
-        alert("Please select both From and To date/time.");
-        return;
-      }
-      const filtered = allData.filter(row => {
-        const time = new Date(row.timestamp);
-        return time >= from && time <= to;
-      });
-      if (filtered.length === 0) {
-        alert("No data found in selected range.");
-        return;
-      }
+      if (isNaN(from) || isNaN(to)) return showAlert("Please select both From and To date/time.");
+      const filtered = allData.filter(row => new Date(row.timestamp) >= from && new Date(row.timestamp) <= to);
+      if (filtered.length === 0) return showAlert("No data found in selected range.");
       let csv = "Timestamp,Sensor1,Sensor2\n";
       filtered.forEach(row => {
         csv += `${formatDateTime(row.timestamp)},${row.sensor1},${row.sensor2}\n`;
@@ -178,29 +184,15 @@
     function exportPDF() {
       const fromInput = document.getElementById("fromTime").value;
       const toInput = document.getElementById("toTime").value;
-      if (!fromInput || !toInput) {
-        alert("Please select both From and To time.");
-        return;
-      }
+      if (!fromInput || !toInput) return showAlert("Please select both From and To time.");
       const from = new Date(fromInput);
       const to = new Date(toInput);
-      const filtered = allData.filter(row => {
-        const time = new Date(row.timestamp);
-        return time >= from && time <= to;
-      });
-      if (filtered.length === 0) {
-        alert("No data found in selected range.");
-        return;
-      }
+      const filtered = allData.filter(row => new Date(row.timestamp) >= from && new Date(row.timestamp) <= to);
+      if (filtered.length === 0) return showAlert("No data found in selected range.");
       const tbody = document.getElementById("dataBody");
       tbody.innerHTML = "";
       filtered.forEach(row => {
-        tbody.innerHTML += `
-          <tr class="page-break-inside-avoid">
-            <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
-            <td class="p-2 border">${row.sensor1}</td>
-            <td class="p-2 border">${row.sensor2}</td>
-          </tr>`;
+        tbody.innerHTML += `<tr class="page-break-inside-avoid"><td class="p-2 border">${formatDateTime(row.timestamp)}</td><td class="p-2 border">${row.sensor1}</td><td class="p-2 border">${row.sensor2}</td></tr>`;
       });
       updatePrintDate();
       createQRCode(`PLC Report\nFrom: ${formatDateTime(fromInput)}\nTo: ${formatDateTime(toInput)}`);
