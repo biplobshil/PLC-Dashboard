@@ -40,7 +40,9 @@
     <div id="pdfContent" class="p-4 bg-white rounded shadow">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-4">
-          <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-20 w-20 sm:h-24 sm:w-24 object-contain" /> 
+         <!-- <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="Logo" class="w-12 h-12" /> -->
+        <img src="https://i.ibb.co/twcCv8R5/automation-image.jpg" alt="automation-image" class="h-20 w-20 sm:h-24 sm:w-24 object-contain" /> 
+
           <div>
             <h2 class="text-xl font-bold text-gray-700">TechSkills Journey PLC Report</h2>
             <p class="text-sm text-gray-500">Generated on: <span id="printDate"></span></p>
@@ -54,9 +56,8 @@
         <thead class="bg-blue-200">
           <tr>
             <th class="p-2 border">Timestamp</th>
-            <th class="p-2 border">MC Start/Stop</th>
-            <th class="p-2 border">No of Yarn Breaks</th>
-            <th class="p-2 border">Machine Running Hours</th>
+            <th class="p-2 border">Sensor 1</th>
+            <th class="p-2 border">Sensor 2</th>
           </tr>
         </thead>
         <tbody id="dataBody"></tbody>
@@ -95,7 +96,7 @@
     async function fetchData() {
       const response = await fetch("https://script.google.com/macros/s/AKfycbzo1t2Xy4ZRmYLOjt4f9rpbgrUeOq_vp-iY0F6pLeTHfi5sFJj-1UlqnwD3LiL-abqjAw/exec");
       const data = await response.json();
-      allData = data.slice(1).reverse(); // skip header row
+      allData = data.slice(1).reverse(); // skip header
       renderTable(allData);
     }
 
@@ -106,9 +107,8 @@
         tbody.innerHTML += `
           <tr class="page-break-inside-avoid">
             <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
-            <td class="p-2 border">${row.MC_StartStop || ''}</td>
-            <td class="p-2 border">${row.No_of_YB || ''}</td>
-            <td class="p-2 border">${row.Machine_RH || ''}</td>
+            <td class="p-2 border">${row.sensor1}</td>
+            <td class="p-2 border">${row.sensor2}</td>
           </tr>`;
       });
     }
@@ -132,9 +132,9 @@
         return;
       }
 
-      let csv = "Timestamp,MC_StartStop,No_of_YB,Machine_RH\n";
+      let csv = "Timestamp,Sensor1,Sensor2\n";
       filtered.forEach(row => {
-        csv += `${formatDateTime(row.timestamp)},${row.MC_StartStop || ''},${row.No_of_YB || ''},${row.Machine_RH || ''}\n`;
+        csv += `${formatDateTime(row.timestamp)},${row.sensor1},${row.sensor2}\n`;
       });
 
       const blob = new Blob([csv], { type: "text/csv" });
@@ -168,16 +168,14 @@
         return;
       }
 
-      // Re-render table with filtered data before exporting PDF
       const tbody = document.getElementById("dataBody");
       tbody.innerHTML = "";
       filtered.forEach(row => {
         tbody.innerHTML += `
           <tr class="page-break-inside-avoid">
             <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
-            <td class="p-2 border">${row.MC_StartStop || ''}</td>
-            <td class="p-2 border">${row.No_of_YB || ''}</td>
-            <td class="p-2 border">${row.Machine_RH || ''}</td>
+            <td class="p-2 border">${row.sensor1}</td>
+            <td class="p-2 border">${row.sensor2}</td>
           </tr>`;
       });
 
