@@ -97,177 +97,166 @@
   </div>
 
   <script>
-    let allData = [];
+  let allData = [];
+  let filteredData = [];
 
-    function formatDateTime(isoString) {
-      const date = new Date(isoString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const seconds = String(date.getSeconds()).padStart(2, '0');
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  function formatDateTime(isoString) {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
+  function updatePrintDate() {
+    document.getElementById("printDate").innerText = formatDateTime(new Date().toISOString());
+  }
+
+  function createQRCode(content) {
+    const qrDiv = document.getElementById("qrcode");
+    qrDiv.innerHTML = "";
+    new QRCode(qrDiv, {
+      text: content,
+      width: 80,
+      height: 80
+    });
+  }
+
+  async function fetchData() {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbzo1t2Xy4ZRmYLOjt4f9rpbgrUeOq_vp-iY0F6pLeTHfi5sFJj-1UlqnwD3LiL-abqjAw/exec");
+    const data = await response.json();
+    allData = data.slice(1).reverse(); // skip header, latest first
+    renderTable(allData.slice(0, 15)); // show only last 15
+    updateLiveData(allData);
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById("dataBody");
+    tbody.innerHTML = "";
+    data.forEach(row => {
+      tbody.innerHTML += `
+        <tr class="page-break-inside-avoid">
+          <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
+          <td class="p-2 border">${row.sensor1}</td>
+          <td class="p-2 border">${row.sensor2}</td>
+        </tr>`;
+    });
+  }
+
+  function updateLiveData(data) {
+    if (data.length === 0) {
+      document.getElementById("feedFlow").innerText = "--";
+      document.getElementById("condensateFlow").innerText = "--";
+      document.getElementById("productFlow").innerText = "--";
+      return;
+    }
+    const latest = data[0];
+    document.getElementById("feedFlow").innerText = formatDateTime(latest.timestamp);
+    document.getElementById("condensateFlow").innerText = latest.sensor1;
+    document.getElementById("productFlow").innerText = latest.sensor2;
+  }
+
+  function showAlert(message) {
+    const existing = document.querySelector(".custom-alert");
+    if (existing) existing.remove();
+    const div = document.createElement("div");
+    div.className = "custom-alert";
+    div.innerText = message;
+    document.querySelector(".max-w-6xl").prepend(div);
+    setTimeout(() => div.remove(), 4000);
+  }
+
+  function exportCSV() {
+    const fromInput = document.getElementById("fromTime").value;
+    const toInput = document.getElementById("toTime").value;
+
+    if (!fromInput || !toInput) {
+      showAlert("Please select both From and To date/time.");
+      return;
     }
 
-    function updatePrintDate() {
-      document.getElementById("printDate").innerText = formatDateTime(new Date().toISOString());
+    const from = new Date(fromInput);
+    const to = new Date(toInput);
+
+    filteredData = allData.filter(row => {
+      const time = new Date(row.timestamp);
+      return time >= from && time <= to;
+    });
+
+    if (filteredData.length === 0) {
+      showAlert("No data found in selected range.");
+      return;
     }
 
-    function createQRCode(content) {
-      const qrDiv = document.getElementById("qrcode");
-      qrDiv.innerHTML = "";
-      new QRCode(qrDiv, {
-        text: content,
-        width: 80,
-        height: 80
-      });
+    let csv = "Timestamp,Sensor1,Sensor2\n";
+    filteredData.forEach(row => {
+      csv += `${formatDateTime(row.timestamp)},${row.sensor1},${row.sensor2}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `PLC_Report_${formatDateTime(fromInput)}_to_${formatDateTime(toInput)}.csv`;
+    a.click();
+  }
+
+  function exportPDF() {
+    const fromInput = document.getElementById("fromTime").value;
+    const toInput = document.getElementById("toTime").value;
+
+    if (!fromInput || !toInput) {
+      showAlert("Please select both From and To time.");
+      return;
     }
 
-    async function fetchData() {
-      const response = await fetch("https://script.google.com/macros/s/AKfycbzo1t2Xy4ZRmYLOjt4f9rpbgrUeOq_vp-iY0F6pLeTHfi5sFJj-1UlqnwD3LiL-abqjAw/exec");
-      const data = await response.json();
-      allData = data.slice(1).reverse(); // skip header, reverse for latest first
-      renderTable(allData);
-      updateLiveData(allData);
+    const from = new Date(fromInput);
+    const to = new Date(toInput);
+
+    filteredData = allData.filter(row => {
+      const time = new Date(row.timestamp);
+      return time >= from && time <= to;
+    });
+
+    if (filteredData.length === 0) {
+      showAlert("No data found in selected range.");
+      return;
     }
 
-    function renderTable(data) {
-      const tbody = document.getElementById("dataBody");
-      tbody.innerHTML = "";
-      data.forEach(row => {
-        tbody.innerHTML += `
-          <tr class="page-break-inside-avoid">
-            <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
-            <td class="p-2 border">${row.sensor1}</td>
-            <td class="p-2 border">${row.sensor2}</td>
-          </tr>`;
-      });
-    }
+    const tbody = document.getElementById("dataBody");
+    tbody.innerHTML = "";
+    filteredData.forEach(row => {
+      tbody.innerHTML += `
+        <tr class="page-break-inside-avoid">
+          <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
+          <td class="p-2 border">${row.sensor1}</td>
+          <td class="p-2 border">${row.sensor2}</td>
+        </tr>`;
+    });
 
-    function updateLiveData(data) {
-      if (data.length === 0) {
-        document.getElementById("feedFlow").innerText = "--";
-        document.getElementById("condensateFlow").innerText = "--";
-        document.getElementById("productFlow").innerText = "--";
-        return;
-      }
-      const latest = data[0]; // first element after reversing is latest
-      document.getElementById("feedFlow").innerText = formatDateTime(latest.timestamp);
-      document.getElementById("condensateFlow").innerText = latest.sensor1;
-      document.getElementById("productFlow").innerText = latest.sensor2;
-    }
+    updatePrintDate();
+    createQRCode(`PLC Report\nFrom: ${formatDateTime(fromInput)}\nTo: ${formatDateTime(toInput)}`);
 
-    function showAlert(message) {
-      // remove existing alerts
-      const existing = document.querySelector(".custom-alert");
-      if (existing) existing.remove();
+    const element = document.getElementById("pdfContent");
+    const opt = {
+      margin: 0.5,
+      filename: `PLC_Report_${fromInput}_to_${toInput}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+    };
 
-      const div = document.createElement("div");
-      div.className = "custom-alert";
-      div.innerText = message;
-      document.querySelector(".max-w-6xl").prepend(div);
+    html2pdf().set(opt).from(element).save().then(() => {
+      renderTable(allData.slice(0, 15)); // Reset live table view
+    });
+  }
 
-      setTimeout(() => div.remove(), 4000); // auto hide after 4 sec
-    }
+  fetchData();
+  setInterval(fetchData, 5000);
+</script>
 
-    function exportCSV() {
-      const fromInput = document.getElementById("fromTime").value;
-      const toInput = document.getElementById("toTime").value;
-
-      if (!fromInput || !toInput) {
-        showAlert("Please select both From and To date/time.");
-        return;
-      }
-
-      const from = new Date(fromInput);
-      const to = new Date(toInput);
-
-      if (from > to) {
-        showAlert("From date/time cannot be after To date/time.");
-        return;
-      }
-
-      const filtered = allData.filter(row => {
-        const time = new Date(row.timestamp);
-        return time >= from && time <= to;
-      });
-
-      if (filtered.length === 0) {
-        showAlert("No data found in selected range.");
-        return;
-      }
-
-      let csv = "Timestamp,Sensor1,Sensor2\n";
-      filtered.forEach(row => {
-        csv += `${formatDateTime(row.timestamp)},${row.sensor1},${row.sensor2}\n`;
-      });
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `PLC_Report_${formatDateTime(fromInput)}_to_${formatDateTime(toInput)}.csv`;
-      a.click();
-    }
-
-    function exportPDF() {
-      const fromInput = document.getElementById("fromTime").value;
-      const toInput = document.getElementById("toTime").value;
-
-      if (!fromInput || !toInput) {
-        showAlert("Please select both From and To time.");
-        return;
-      }
-
-      const from = new Date(fromInput);
-      const to = new Date(toInput);
-
-      if (from > to) {
-        showAlert("From date/time cannot be after To date/time.");
-        return;
-      }
-
-      const filtered = allData.filter(row => {
-        const time = new Date(row.timestamp);
-        return time >= from && time <= to;
-      });
-
-      if (filtered.length === 0) {
-        showAlert("No data found in selected range.");
-        return;
-      }
-
-      // Temporarily render filtered data in table before generating PDF
-      const tbody = document.getElementById("dataBody");
-      tbody.innerHTML = "";
-      filtered.forEach(row => {
-        tbody.innerHTML += `
-          <tr class="page-break-inside-avoid">
-            <td class="p-2 border">${formatDateTime(row.timestamp)}</td>
-            <td class="p-2 border">${row.sensor1}</td>
-            <td class="p-2 border">${row.sensor2}</td>
-          </tr>`;
-      });
-
-      updatePrintDate();
-      createQRCode(`PLC Report\nFrom: ${formatDateTime(fromInput)}\nTo: ${formatDateTime(toInput)}`);
-
-      const element = document.getElementById("pdfContent");
-      const opt = {
-        margin: 0.5,
-        filename: `PLC_Report_${fromInput}_to_${toInput}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-      };
-
-      html2pdf().set(opt).from(element).save();
-    }
-
-    fetchData();
-    setInterval(fetchData, 5000);
-  </script>
 </body>
 </html>
